@@ -5,29 +5,38 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath } from 'url';
 import { SCHEMA_SQL, SEED_SQL } from './schema.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// We keep a tiny registry so repeated openDb() calls with the same path reuse
+// the connection, but a different path replaces it. This matters for tests,
+// which build a fresh app on a temp file per test — the previous connection
+// must be released before the new one is opened.
 let _db = null;
+let _dbPath = null;
 
 export function openDb(dbPath) {
-  if (_db) return _db;
-
   const absPath = resolve(process.cwd(), dbPath);
+
+  if (_db && _dbPath === absPath) return _db;
+
+  if (_db) {
+    try { _db.close(); } catch {}
+    _db = null;
+    _dbPath = null;
+  }
+
   mkdirSync(dirname(absPath), { recursive: true });
 
-  _db = new DatabaseSync(absPath);
-
-  // Apply schema. multi-statement exec is supported by node:sqlite.
-  _db.exec(SCHEMA_SQL);
-
-  // Seed local_user row if missing.
+  const db = new DatabaseSync(absPath);
+  db.exec(SCHEMA_SQL);
   const now = Date.now();
-  const seed = SEED_SQL.replaceAll('$now', String(now));
-  _db.exec(seed);
+  db.exec(SEED_SQL.replaceAll('$now', String(now)));
 
+  _db = db;
+  _dbPath = absPath;
   return _db;
 }
 
@@ -38,8 +47,9 @@ export function getDb() {
 
 export function closeDb() {
   if (_db) {
-    _db.close();
+    try { _db.close(); } catch {}
     _db = null;
+    _dbPath = null;
   }
 }
 

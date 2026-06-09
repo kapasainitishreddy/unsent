@@ -17,11 +17,13 @@ const idParam = z.object({ id: z.string().uuid() });
 export default async function (fastify) {
   fastify.get('/api/unsent', async (req) => {
     const shape = typeof req.query.shape === 'string' ? req.query.shape : null;
+    const outcome = typeof req.query.outcome === 'string' ? req.query.outcome : null;
     const limit = Math.min(parseInt(req.query.limit || '50', 10) || 50, 200);
     const offset = parseInt(req.query.offset || '0', 10) || 0;
     let sql = `SELECT * FROM unsent_messages WHERE user_id = ?`;
     const args = [req.userId];
-    if (shape) { sql += ` AND shape = ?`; args.push(shape); }
+    if (shape)   { sql += ` AND shape = ?`;   args.push(shape); }
+    if (outcome) { sql += ` AND outcome = ?`; args.push(outcome); }
     sql += ` ORDER BY created_at DESC LIMIT ? OFFSET ?`;
     args.push(limit, offset);
     const total = db.get(`SELECT COUNT(*) AS n FROM unsent_messages WHERE user_id = ?`, [req.userId]).n;

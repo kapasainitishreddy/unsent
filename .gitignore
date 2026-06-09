@@ -1,8 +1,14 @@
 node_modules/
 data/*.db
-data/*.db-shm
-data/*.db-wal
+data/*.db-*
 data/*.log
 .env
-*.log
+.env.local
 .DS_Store
+.vscode/
+.idea/
+client/node_modules/
+client/dist/
+*.log
+coverage/
+.nyc_output/
