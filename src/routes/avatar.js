@@ -25,7 +25,16 @@ export default async function (fastify) {
   fastify.get('/api/avatar', async (req, reply) => {
     const a = db.get(`SELECT * FROM avatar_settings WHERE user_id = ?`, [req.userId]);
     if (!a) return reply.code(404).send({ error: 'not_found' });
-    return { ...a, presets: PRESETS, hair_styles: HAIR_STYLES, outfits: OUTFITS, glasses: GLASSES, expressions: EXPRESSIONS };
+    return {
+      ...a,
+      meta: {
+        presets: PRESETS,
+        hair_styles: HAIR_STYLES,
+        outfits: OUTFITS,
+        glasses: GLASSES,
+        expressions: EXPRESSIONS,
+      },
+    };
   });
 
   fastify.patch('/api/avatar', withBody(updateSchema, async (req, reply, d) => {

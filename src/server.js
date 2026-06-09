@@ -13,6 +13,9 @@ dotenv.config();
 
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 import { openDb, get as dbGet } from './db/index.js';
 import { nowMs } from './util.js';
@@ -31,6 +34,7 @@ import exportRoute   from './routes/export.js';
 import wipeRoute     from './routes/wipe.js';
 import aiRoute       from './routes/ai.js';
 import statsRoute    from './routes/stats.js';
+import metaRoute     from './routes/meta.js';
 
 const PORT  = parseInt(process.env.PORT  || '4000', 10);
 const HOST  = process.env.HOST  || '127.0.0.1';
@@ -77,6 +81,7 @@ const ENDPOINTS = [
   'POST   /api/ai/companion                (auth)',
   'POST   /api/ai/crisis-check             (auth)',
   'GET    /api/ai/status',
+  'GET    /api/meta',
 ];
 
 /**
@@ -91,6 +96,16 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   });
 
   await fastify.register(cors, { origin: true, credentials: true });
+
+  // Serve the demo client (vanilla HTML + JS, no build step).
+  // In production you'd ship the client separately; for the demo, it lives at /app.
+  // GET / returns the API banner (JSON). GET /app/ returns the SPA shell.
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  await fastify.register(fastifyStatic, {
+    root: join(__dirname, '..', 'client'),
+    prefix: '/app/',
+  });
+  fastify.get('/app', async (_req, reply) => reply.redirect('/app/'));
 
   fastify.get('/', async () => ({
     name: 'unsent-backend',
@@ -119,13 +134,13 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   fastify.addHook('preHandler', async (req, reply) => {
     const url = req.routeOptions?.url || req.url;
     if (!url.startsWith('/api/')) return;
-    if (url === '/api/health' || url === '/api/ai/status' || url === '/api/me') return;
+    if (url === '/api/health' || url === '/api/ai/status' || url === '/api/me' || url === '/api/meta') return;
     return requireAuth(req, reply);
   });
 
   for (const plugin of [
     vents, unsent, journal, mood, affirmations, intentions, coping,
-    avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute,
+    avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute, metaRoute,
   ]) {
     await fastify.register(plugin);
   }

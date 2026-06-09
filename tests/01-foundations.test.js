@@ -78,7 +78,8 @@ test('GET /api/avatar returns default avatar (luna)', async () => {
   const body = JSON.parse(res.body);
   assert.equal(body.preset_id, 'luna');
   assert.equal(body.source, 'preset');
-  assert.ok(Array.isArray(body.hair_styles));
+  assert.ok(Array.isArray(body.meta.hair_styles));
+  assert.ok(Array.isArray(body.meta.glasses));
 });
 
 test('PATCH /api/avatar updates hair color', async () => {
