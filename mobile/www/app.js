@@ -20,11 +20,9 @@ function initTheme() {
     applyTheme(next);
   });
 }
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  const btn = $('#themeToggle');
-  if (btn) btn.textContent = t === 'dark' ? '☀' : '☾';
-}
+
+// applyTheme is defined below (line 80) with a more complete implementation
+// that also updates the onboarding overlay toggle. Don't redefine here.
 
 const state = {
   me: null,
