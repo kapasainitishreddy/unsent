@@ -219,9 +219,71 @@
     @media (prefers-reduced-motion: reduce) {
       .mic-btn.recording { animation: none; }
     }
+    /* Gratitude Garden */
+    .grat-tag {
+      background: var(--bg-soft); color: var(--ink-soft);
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 4px 12px; font: 500 12px/1 var(--ui);
+      cursor: pointer; transition: all 160ms;
+    }
+    .grat-tag:hover { color: var(--ink); border-color: var(--ink-soft); }
+    .grat-tag.picked {
+      background: var(--accent); color: white; border-color: var(--accent);
+    }
+    .garden-canvas {
+      min-height: 220px;
+      background:
+        radial-gradient(ellipse at 50% 100%, var(--bg-soft) 0%, transparent 70%),
+        var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+    }
+    .garden-plot {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      align-items: flex-end; justify-content: center;
+      min-height: 180px;
+    }
+    .plant {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; width: 80px; text-align: center;
+      transition: transform 280ms ease;
+    }
+    .plant:hover { transform: translateY(-4px); }
+    .plant svg { width: 60px; height: 60px; }
+    .plant-label {
+      font: italic 11px/1.2 'Fraunces', Georgia, serif;
+      color: var(--ink-soft);
+      max-width: 80px; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .plant-stage-tag {
+      font: 600 9px/1 var(--ui);
+      letter-spacing: .08em; text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .grat-entry {
+      padding: 12px 0; border-top: 1px dashed var(--line-soft);
+      display: flex; gap: 10px; align-items: flex-start;
+    }
+    .grat-entry:first-child { border-top: 0; padding-top: 0; }
+    .grat-entry-text { flex: 1; font: 14px/1.5 var(--ui); color: var(--ink); }
+    .grat-entry-meta {
+      font: 11px/1 var(--ui); color: var(--ink-faint);
+      letter-spacing: .04em; text-transform: uppercase;
+    }
+    .grat-entry .delete-x {
+      background: transparent; border: 0; color: var(--ink-faint);
+      cursor: pointer; padding: 4px 6px; border-radius: 4px;
+    }
+    .grat-entry .delete-x:hover { color: var(--bad); background: var(--bg-soft); }
+
     .field + .field { margin-top: 14px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
 
     /* buttons */
     .btn {
@@ -692,6 +754,10 @@
           <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
           Intentions
         </button>
+        <button class="nav-item" data-surface="gratitude">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2.5"/><path d="M12 9.5V4M9 5l3-2 3 2M5 12c-1-2 1-5 4-5M19 12c1-2-1-5-4-5M9 19c2 1 5-1 5-4M15 19c-2 1-5-1-5-4"/></svg>
+          Garden
+        </button>
 
         <div class="nav-section">You</div>
         <button class="nav-item" data-surface="avatar">
@@ -1028,6 +1094,39 @@
           </div>
         </div>
         <div id="intention-list" style="margin-top:24px"></div>
+      </section>
+
+      <!-- GRATITUDE GARDEN -->
+      <section class="surface" data-surface="gratitude">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A small garden of yours</div>
+            <h1 class="page-title">Gratitude Garden</h1>
+            <p class="page-sub">Each thing you're grateful for plants a seed. Watch them grow.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <label class="field-label" for="grat-text" style="display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:8px">I'm grateful for…</label>
+          <textarea id="grat-text" class="onboard-input" rows="2" placeholder="the way the light came through the curtains this morning"></textarea>
+          <div class="grat-tags" id="grat-tags" style="display:flex;gap:6px;flex-wrap:wrap;margin:12px 0">
+            <button class="grat-tag picked" data-tag="moment" type="button">moment</button>
+            <button class="grat-tag" data-tag="person" type="button">person</button>
+            <button class="grat-tag" data-tag="thing" type="button">thing</button>
+            <button class="grat-tag" data-tag="self" type="button">self</button>
+            <button class="grat-tag" data-tag="other" type="button">other</button>
+          </div>
+          <button class="btn btn-accent" id="grat-save" type="button" style="width:100%">Plant it</button>
+        </div>
+
+        <div id="grat-count" style="text-align:center;font-size:12px;color:var(--ink-soft);margin:18px 0 8px;letter-spacing:.06em;text-transform:uppercase"></div>
+
+        <div class="garden-canvas" id="garden-canvas" aria-label="Your garden"></div>
+
+        <div class="card" id="grat-list-card" style="margin-top:18px">
+          <h3 style="font-size:15px;margin-bottom:12px;color:var(--ink)">What's growing</h3>
+          <div id="grat-list"></div>
+        </div>
       </section>
 
       <!-- ARIA (avatar) -->

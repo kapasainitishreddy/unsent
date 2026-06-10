@@ -36,6 +36,7 @@ import aiRoute       from './routes/ai.js';
 import statsRoute    from './routes/stats.js';
 import metaRoute     from './routes/meta.js';
 import billingRoute  from './routes/billing.js';
+import gratitudeRoute from './routes/gratitude.js';
 
 const PORT  = parseInt(process.env.PORT  || '4000', 10);
 const HOST  = process.env.HOST  || '127.0.0.1';
@@ -84,6 +85,10 @@ const ENDPOINTS = [
   'GET    /api/ai/status',
   'GET    /api/meta',
   'POST   /api/billing/webhook             (public — RevenueCat server-to-server)',
+  'GET    /api/gratitude',
+  'POST   /api/gratitude',
+  'DELETE /api/gratitude/:id',
+  'GET    /api/gratitude/garden',
 ];
 
 /**
@@ -147,7 +152,7 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   for (const plugin of [
     vents, unsent, journal, mood, affirmations, intentions, coping,
     avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute, metaRoute,
-    billingRoute,
+    billingRoute, gratitudeRoute,
   ]) {
     await fastify.register(plugin);
   }

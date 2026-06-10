@@ -36,12 +36,26 @@ export function initClerk() {
   const keySave = document.getElementById('clerkKeySave');
   const status = document.getElementById('clerkStatus');
   const signOut = document.getElementById('clerkSignOut');
+  const card = document.getElementById('authCard') || document.getElementById('clerkCard');
 
   if (!mount) return; // not on the account tab
 
-  // Always show the paste-token + key rows (dev panel)
+  // The dev panel (paste publishable key, paste session JWT, sign out) is for
+  // us (the developer) only. End users in a real Clerk deployment never see
+  // this. It only shows when explicitly enabled via ?dev=1 in the URL.
+  const showDev = new URLSearchParams(location.search).get('dev') === '1'
+    || localStorage.getItem('unsent_show_dev') === '1';
+
+  if (!showDev) {
+    // In production / end-user mode, hide the whole Clerk card.
+    if (card) card.style.display = 'none';
+    return; // skip all Clerk setup
+  }
+
+  // Dev mode: show the paste-row inputs.
   if (pasteRow) pasteRow.hidden = false;
   if (tokenInput) tokenInput.value = getClerkToken() || '';
+  if (keyInput) keyInput.value = getPublishableKey();
 
   if (tokenSave) tokenSave.addEventListener('click', () => {
     const t = (tokenInput.value || '').trim();

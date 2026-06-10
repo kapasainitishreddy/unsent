@@ -112,6 +112,7 @@ $$('.nav-item').forEach(el => {
     $$('.surface').forEach(s => s.classList.toggle('active', s.dataset.surface === target));
     if (target === 'avatar') renderAvatar();
     if (target === 'account') import('./aria.js').then(m => m.init()).catch(err => console.warn(err));
+    if (target === 'gratitude') import('./gratitude.js').then(m => m.init()).catch(err => console.warn(err));
   });
 });
 
@@ -715,16 +716,32 @@ function emptyState(arg, title, sub) {
 function mascot(name, bare = false) {
   const a = (svg) => bare ? svg : `<div class="mascot">${svg}</div>`;
   switch (name) {
-    case 'crane': // companion tab — paper crane, soft amber
+    case 'crane': // chibi paper crane — big round head, blush, dot eyes
       return a(`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 60 Q38 30 62 18" />
-          <path d="M12 60 L34 50 L46 60 L28 66 Z" fill="currentColor" fill-opacity="0.22" />
-          <path d="M34 50 Q42 34 60 20" />
-          <circle cx="61.5" cy="18.5" r="2" fill="currentColor" />
-          <path d="M63 17 L70 14" />
-          <path d="M40 44 L46 38" opacity="0.6" />
-        </g>
+        <!-- soft round body -->
+        <ellipse cx="40" cy="48" rx="22" ry="18" fill="currentColor" fill-opacity="0.18" />
+        <!-- big round head -->
+        <circle cx="48" cy="28" r="16" fill="currentColor" fill-opacity="0.28" />
+        <!-- outer outline of head and body -->
+        <path d="M48 12 a16 16 0 0 1 14 9 q3 8 -2 14 q-5 6 -14 6 q-10 0 -16 -8 q-6 -9 -1 -16 q4 -5 12 -6 z"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+        <!-- folded paper body triangle -->
+        <path d="M22 50 Q28 38 40 42 Q52 38 58 50 Q50 64 40 64 Q30 64 22 50 Z"
+              fill="currentColor" fill-opacity="0.22" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+        <!-- tiny wing tucked on the side -->
+        <path d="M28 46 Q34 42 40 46" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <!-- big shiny eyes -->
+        <ellipse cx="44" cy="28" rx="2.4" ry="3" fill="var(--bg, #faf7f2)" />
+        <ellipse cx="54" cy="28" rx="2.4" ry="3" fill="var(--bg, #faf7f2)" />
+        <circle cx="44" cy="29" r="1.4" fill="currentColor" />
+        <circle cx="54" cy="29" r="1.4" fill="currentColor" />
+        <!-- blush dots -->
+        <circle cx="40" cy="34" r="2" fill="#f4a78d" fill-opacity="0.7" />
+        <circle cx="58" cy="34" r="2" fill="#f4a78d" fill-opacity="0.7" />
+        <!-- tiny smile -->
+        <path d="M47 34 q2 2 4 0" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+        <!-- little beak -->
+        <path d="M62 28 l6 -2 l-6 4 z" fill="currentColor" fill-opacity="0.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
       </svg>`);
     case 'moon': // journal tab — crescent moon with a tiny star
       return a(`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

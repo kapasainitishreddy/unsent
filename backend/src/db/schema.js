@@ -154,6 +154,21 @@ CREATE TABLE IF NOT EXISTS coping_sessions (
 CREATE INDEX IF NOT EXISTS idx_coping_user_time ON coping_sessions(user_id, created_at DESC);
 
 -- ============================================================
+-- 09b. gratitude_entries — Gratitude Garden (free, accumulating)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS gratitude_entries (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL,
+  text        TEXT NOT NULL,
+  tag         TEXT NOT NULL DEFAULT 'moment',    -- person | moment | thing | self | other
+  mood_id     TEXT,                                -- optional link to the mood at the time
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES settings(user_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_grat_user_created ON gratitude_entries(user_id, created_at DESC);
+
+-- ============================================================
 -- 09. avatar_settings — the symbolic listener (one per user is the MVP)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS avatar_settings (
