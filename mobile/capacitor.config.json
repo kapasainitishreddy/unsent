@@ -1,0 +1,29 @@
+{
+  "appId": "com.unsent.app",
+  "appName": "Unsent",
+  "webDir": "www",
+  "server": {
+    "url": "http://10.0.2.2:4000/app/",
+    "cleartext": true
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#FAF6EE"
+  },
+  "android": {
+    "backgroundColor": "#FAF6EE",
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#FAF6EE",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DEFAULT",
+      "backgroundColor": "#FAF6EE"
+    }
+  }
+}

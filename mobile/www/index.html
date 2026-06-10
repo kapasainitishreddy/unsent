@@ -1,0 +1,1098 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Unsent is a private place to say what you can't send. A friend who listens and remembers, not a therapist." />
+  <title>Unsent — say what you can't send</title>
+  <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><circle cx='32' cy='32' r='30' fill='%23c2410c'/><path d='M16 26h32v18H26l-10 8z' fill='%23fffdf9'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    /* ============== design tokens (light default) ============== */
+    :root {
+      --bg: #faf7f2;
+      --bg-soft: #f3eee5;
+      --bg-deep: #ebe3d2;
+      --card: #fffdf9;
+      --card-2: #fdf9f1;
+      --ink: #2a2620;
+      --ink-soft: #6b6357;
+      --ink-faint: #a8a094;
+      --line: #e9e1d3;
+      --line-soft: #f0e9dc;
+      --accent: #c2410c;
+      --accent-soft: #fed7aa;
+      --accent-deep: #9a3412;
+      --good: #4d7c5f;
+      --warn: #b45309;
+      --bad: #b91c1c;
+      --crisis: #7c2d12;
+      --aria-glow: #d97706;
+
+      --r-sm: 6px;
+      --r-md: 10px;
+      --r-lg: 16px;
+      --r-xl: 24px;
+
+      --shadow-1: 0 1px 2px rgba(42, 38, 32, .04), 0 1px 1px rgba(42, 38, 32, .03);
+      --shadow-2: 0 4px 16px -4px rgba(42, 38, 32, .08), 0 2px 4px rgba(42, 38, 32, .04);
+      --shadow-3: 0 16px 48px -12px rgba(42, 38, 32, .15), 0 4px 12px rgba(42, 38, 32, .06);
+    }
+
+    /* ============== dark theme ============== */
+    [data-theme="dark"] {
+      --bg: #161311;
+      --bg-soft: #1f1b18;
+      --bg-deep: #100e0c;
+      --card: #221e1a;
+      --card-2: #2a2521;
+      --ink: #f3ede3;
+      --ink-soft: #b8ad9d;
+      --ink-faint: #7a7264;
+      --line: #2f2924;
+      --line-soft: #26221e;
+      --accent: #fb923c;
+      --accent-soft: #5a3320;
+      --accent-deep: #fdba74;
+      --good: #6da583;
+      --warn: #d97706;
+      --bad: #ef4444;
+      --crisis: #fca5a5;
+      --aria-glow: #fbbf24;
+
+      --shadow-1: 0 1px 2px rgba(0,0,0,.4), 0 1px 1px rgba(0,0,0,.3);
+      --shadow-2: 0 4px 16px -4px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.4);
+      --shadow-3: 0 16px 48px -12px rgba(0,0,0,.7), 0 4px 12px rgba(0,0,0,.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color .25s ease, color .25s ease;
+    }
+    h1, h2, h3, h4 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; letter-spacing: -0.01em; }
+    .serif { font-family: 'Fraunces', Georgia, serif; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 13px; }
+
+    /* ============== layout ============== */
+    .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    aside.sidebar {
+      background: var(--bg-soft);
+      border-right: 1px solid var(--line);
+      padding: 28px 20px;
+      display: flex; flex-direction: column; gap: 24px;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .brand { display: flex; align-items: baseline; gap: 8px; }
+    .brand-mark { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+    .brand-tag { font-size: 11px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.12em; }
+
+    .me-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .me-row { display: flex; align-items: center; gap: 8px; }
+    .me-name { font-size: 13px; font-weight: 600; }
+    .me-meta { font-size: 11px; color: var(--ink-faint); display: flex; gap: 6px; align-items: center; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); display: inline-block; }
+    .dot.warn { background: var(--warn); }
+    .dot.bad { background: var(--bad); }
+    .tier-pill { font-size: 10px; padding: 2px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-deep); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+    [data-theme="dark"] .tier-pill { color: var(--accent-deep); }
+
+    .nav { display: flex; flex-direction: column; gap: 2px; }
+    .nav-section { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-faint); padding: 8px 10px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: var(--r-sm);
+      color: var(--ink-soft); text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; border: none; background: transparent; text-align: left;
+      transition: all .12s ease;
+    }
+    .nav-item:hover { background: var(--card); color: var(--ink); }
+    .nav-item.active { background: var(--card); color: var(--ink); box-shadow: var(--shadow-1); }
+    .nav-item .icon { width: 18px; height: 18px; opacity: 0.7; }
+    .nav-item.active .icon { opacity: 1; color: var(--accent); }
+    .nav-item .badge {
+      margin-left: auto; font-size: 11px; padding: 1px 7px; border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent-deep); font-weight: 600;
+    }
+
+    .sidebar-tools { margin-top: auto; display: flex; flex-direction: column; gap: 6px; }
+    .footer-note { font-size: 11px; color: var(--ink-faint); line-height: 1.5; }
+    .footer-note a { color: var(--ink-soft); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
+
+    /* main */
+    main { padding: 40px 56px 80px; max-width: 920px; }
+    .page-head { margin-bottom: 32px; display: flex; align-items: flex-start; gap: 16px; }
+    .page-head .ph-text { flex: 1; }
+    .page-eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); font-weight: 600; }
+    .page-title { font-size: 36px; line-height: 1.1; margin-top: 6px; }
+    .page-sub { color: var(--ink-soft); font-size: 15px; margin-top: 8px; max-width: 60ch; }
+
+    .surface { display: none; animation: fadein .2s ease; }
+    .surface.active { display: block; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    /* cards / items */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 22px;
+      box-shadow: var(--shadow-1);
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .card + .card { margin-top: 14px; }
+    .card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .card-head h3 { font-size: 18px; }
+    .card-head .meta { margin-left: auto; font-size: 12px; color: var(--ink-faint); }
+    .stack { display: flex; flex-direction: column; gap: 14px; }
+
+    /* forms */
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+    input, select, textarea {
+      width: 100%;
+      font: inherit; color: var(--ink);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: var(--r-sm);
+      padding: 10px 12px;
+      transition: border-color .12s ease, box-shadow .12s ease, background-color .25s ease;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+    textarea.body { min-height: 180px; font-family: 'Fraunces', Georgia, serif; font-size: 17px; }
+
+    /* voice input */
+    .voice-wrap { position: relative; }
+    .voice-wrap textarea { width: 100%; }
+    .mic-btn {
+      position: absolute; right: 8px; bottom: 8px;
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 999px;
+      background: var(--accent-soft); color: var(--accent-deep);
+      border: 1px solid transparent;
+      font: 500 12px/1 var(--ui); cursor: pointer;
+      transition: all 160ms ease;
+    }
+    .mic-btn:hover { background: var(--accent); color: white; }
+    .mic-btn.recording {
+      background: #e44; color: white;
+      animation: mic-pulse 1.2s infinite;
+    }
+    .mic-btn.recording .mic-label::after { content: ' ●'; }
+    .mic-live {
+      position: absolute; left: 12px; bottom: 14px;
+      font: italic 13px/1.4 'Fraunces', Georgia, serif;
+      color: var(--accent); pointer-events: none;
+      max-width: 70%; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+      opacity: 0; transition: opacity 200ms;
+    }
+    .mic-btn.recording ~ .mic-live { opacity: 1; }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(228, 68, 68, 0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(228, 68, 68, 0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .mic-btn.recording { animation: none; }
+    }
+    .field + .field { margin-top: 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font: inherit; font-weight: 600; font-size: 14px;
+      padding: 10px 18px; border-radius: var(--r-sm);
+      border: 1px solid transparent; cursor: pointer;
+      transition: all .12s ease;
+    }
+    .btn-primary { background: var(--ink); color: var(--bg); }
+    .btn-primary:hover { background: var(--accent); }
+    .btn-accent { background: var(--accent); color: white; }
+    .btn-accent:hover { background: var(--accent-deep); }
+    .btn-ghost { background: transparent; color: var(--ink-soft); }
+    .btn-ghost:hover { background: var(--bg-soft); color: var(--ink); }
+    .btn-outline { background: var(--card); color: var(--ink); border-color: var(--line); }
+    .btn-outline:hover { border-color: var(--ink-soft); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* chips / tags */
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      padding: 3px 10px; border-radius: 999px;
+      background: var(--bg-soft); color: var(--ink-soft);
+      text-transform: uppercase;
+    }
+    .chip.accent { background: var(--accent-soft); color: var(--accent-deep); }
+    .chip.good { background: #d6e4dc; color: #2d5c3e; }
+    [data-theme="dark"] .chip.good { background: #1a3a26; color: #94d4a8; }
+    .chip.warn { background: #fde6c4; color: #8a4d0a; }
+    [data-theme="dark"] .chip.warn { background: #4a2e0a; color: #fcd34d; }
+    .chip.crisis { background: #fcd9c4; color: var(--crisis); }
+    [data-theme="dark"] .chip.crisis { background: #4a1a0a; color: #fca5a5; }
+    .chip.private { background: #e0d9cc; color: #5a4f3f; }
+    [data-theme="dark"] .chip.private { background: #3a352c; color: #b8ad9d; }
+    .chip.deleted { background: #f1e1e1; color: #8b3a3a; }
+    [data-theme="dark"] .chip.deleted { background: #3a1a1a; color: #f87171; }
+
+    /* vent / unsent entries */
+    .entry {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--r-lg);
+      padding: 22px;
+      box-shadow: var(--shadow-1);
+      position: relative;
+      transition: background-color .25s ease, border-color .25s ease;
+    }
+    .entry + .entry { margin-top: 14px; }
+    .entry-body {
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 18px; line-height: 1.65; color: var(--ink);
+      white-space: pre-wrap; word-wrap: break-word;
+    }
+    .entry-body.muted { color: var(--ink-faint); font-style: italic; }
+    .entry-foot { display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    .entry-foot .when { font-size: 12px; color: var(--ink-faint); margin-left: auto; }
+    .entry-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-soft); }
+
+    /* mood display */
+    .mood-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+    .mood-cell { aspect-ratio: 1; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--card); padding: 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; transition: all .15s ease; }
+    .mood-cell:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--accent-soft); }
+    .mood-cell .emoji { font-size: 28px; }
+    .mood-cell .name { font-weight: 600; font-size: 13px; }
+    .mood-cell.selected { border-color: var(--accent); background: var(--accent-soft); }
+
+    .mood-history { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 14px; }
+    .mood-bar { border-radius: var(--r-sm); padding: 8px 6px; text-align: center; font-size: 11px; color: var(--ink-soft); background: var(--bg-soft); }
+    .mood-bar .e { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    /* affirmations */
+    .aff-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .aff-card {
+      background: linear-gradient(135deg, #fdf6ed 0%, #faead3 100%);
+      border: 1px solid #ecd9b3;
+      border-radius: var(--r-lg);
+      padding: 22px;
+      font-family: 'Fraunces', Georgia, serif;
+      font-size: 17px; line-height: 1.5; color: #4a3a1a;
+      position: relative;
+      box-shadow: var(--shadow-1);
+    }
+    [data-theme="dark"] .aff-card {
+      background: linear-gradient(135deg, #2a2017 0%, #3a2a18 100%);
+      border-color: #5a4022;
+      color: #f0d9a8;
+    }
+    .aff-card::before {
+      content: '"';
+      position: absolute; top: 4px; left: 14px;
+      font-size: 56px; color: rgba(194, 65, 12, 0.2);
+      font-family: 'Fraunces', serif; line-height: 1;
+    }
+    [data-theme="dark"] .aff-card::before { color: rgba(251, 146, 60, 0.3); }
+    .aff-card .text { padding-top: 16px; padding-left: 4px; }
+    .aff-card .tags { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+    .aff-card .tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; background: rgba(194, 65, 12, 0.1); color: var(--accent-deep); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    [data-theme="dark"] .aff-card .tag { background: rgba(251, 146, 60, 0.15); color: var(--accent); }
+    .aff-card.user { background: linear-gradient(135deg, #f3eee5 0%, #e6dcc9 100%); border-color: #d4c5a8; }
+    [data-theme="dark"] .aff-card.user { background: linear-gradient(135deg, #1f1b18 0%, #2a2521 100%); border-color: #3a352c; }
+    .aff-card.user::before { color: rgba(106, 99, 87, 0.2); }
+    .aff-card.user .text { color: var(--ink); }
+    .aff-card.user .tag { background: rgba(42, 38, 32, 0.08); color: var(--ink-soft); font-family: 'Inter', sans-serif; }
+    [data-theme="dark"] .aff-card.user .tag { background: rgba(255,255,255,0.05); }
+
+    /* avatar (Aria - animated SVG) */
+    .avatar-stage { display: grid; grid-template-columns: 280px 1fr; gap: 32px; align-items: start; }
+    .avatar-frame {
+      aspect-ratio: 1; border-radius: var(--r-xl);
+      background: linear-gradient(160deg, var(--bg-soft) 0%, var(--bg-deep) 100%);
+      border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-2);
+      overflow: hidden;
+      position: relative;
+    }
+    .avatar-frame svg { width: 100%; height: 100%; display: block; }
+    .avatar-frame .glow {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(circle at 50% 65%, color-mix(in srgb, var(--aria-glow) 25%, transparent) 0%, transparent 50%);
+      animation: aria-glow 4s ease-in-out infinite;
+    }
+    @keyframes aria-glow {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.06); }
+    }
+    .aria-mouth { transform-origin: 200px 235px; transition: transform .3s ease; }
+    .aria-eyes { animation: aria-blink 5s ease-in-out infinite; transform-origin: center; }
+    @keyframes aria-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+    .aria-head { animation: aria-breath 4s ease-in-out infinite; transform-origin: 200px 200px; }
+    @keyframes aria-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.012); } }
+    .aria-speaking .aria-mouth { animation: aria-talk .25s ease-in-out infinite alternate; }
+    @keyframes aria-talk {
+      0% { transform: scaleY(0.6); }
+      100% { transform: scaleY(1.4); }
+    }
+    .aria-listening .aria-head { animation: aria-nod 1.4s ease-in-out; }
+    @keyframes aria-nod {
+      0%, 100% { transform: rotate(0deg); }
+      30% { transform: rotate(-3deg); }
+      70% { transform: rotate(3deg); }
+    }
+
+    .swatch.text { width: auto; min-width: 36px; height: 36px; padding: 0 10px; border-radius: 18px; display: inline-flex; align-items: center; gap: 6px; }
+    .opts { display: flex; flex-direction: column; gap: 18px; }
+    .opts h4 { font-size: 13px; font-weight: 600; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.08em; }
+    .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+    .swatch { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--card); box-shadow: var(--shadow-1); cursor: pointer; transition: transform .12s ease; }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.active { box-shadow: 0 0 0 2px var(--accent); }
+
+    /* companion chat */
+    .chat { display: flex; flex-direction: column; gap: 14px; max-height: 56vh; overflow-y: auto; padding: 4px; }
+    .bubble {
+      max-width: 78%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 15px; line-height: 1.55;
+      word-wrap: break-word;
+    }
+    .bubble.user { align-self: flex-end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+    .bubble.ai { align-self: flex-start; background: var(--card); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+    .bubble.ai.crisis { background: var(--accent-soft); border-color: var(--crisis); color: var(--crisis); }
+    .chat-input { display: flex; gap: 8px; margin-top: 14px; }
+    .chat-input textarea { min-height: 60px; }
+    .tts-btn {
+      position: absolute; bottom: 6px; right: 6px;
+      background: none; border: 1px solid transparent;
+      color: var(--text-soft); cursor: pointer;
+      padding: 4px 6px; border-radius: 6px;
+      opacity: 0; transition: opacity 160ms;
+    }
+    .bubble { position: relative; }
+    .bubble:hover .tts-btn, .tts-btn.speaking { opacity: 1; }
+    .tts-btn.speaking { color: var(--accent); border-color: var(--accent-soft); }
+
+    .aria-orb {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+      padding: 12px 16px; background: var(--card-2); border: 1px solid var(--line); border-radius: var(--r-md);
+    }
+    .aria-orb-icon { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, var(--aria-glow) 100%); display: flex; align-items: center; justify-content: center; }
+    .aria-orb-icon svg { width: 28px; height: 28px; }
+    .aria-orb-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; }
+    .aria-orb-status { font-size: 12px; color: var(--ink-faint); }
+    .aria-orb-status .live { color: var(--good); font-weight: 600; }
+    .aria-orb-meta { margin-left: auto; font-size: 11px; color: var(--ink-faint); text-align: right; }
+
+    /* crisis banner */
+    .crisis-banner {
+      background: linear-gradient(135deg, #fde6c4 0%, #fcd9c4 100%);
+      border: 1px solid #d97706;
+      border-radius: var(--r-md);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    [data-theme="dark"] .crisis-banner { background: linear-gradient(135deg, #3a1f0a 0%, #2a1a0a 100%); border-color: var(--crisis); }
+    .crisis-banner .ic { font-size: 24px; }
+    .crisis-banner h4 { color: var(--crisis); margin-bottom: 4px; font-size: 16px; }
+    .crisis-banner p { color: #5a2e0a; font-size: 13px; }
+    [data-theme="dark"] .crisis-banner p { color: var(--crisis); opacity: .8; }
+    .crisis-banner a { color: var(--crisis); font-weight: 600; }
+
+    /* toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: var(--r-md); box-shadow: var(--shadow-3); font-size: 14px; opacity: 0; transform: translateY(8px); transition: all .2s ease; pointer-events: none; z-index: 100; }
+    .toast.show { opacity: 1; transform: none; }
+    .toast.error { background: var(--bad); }
+    .toast.good { background: var(--good); }
+
+    /* empty state */
+    .empty { text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+    .mascot { width: 80px; height: 80px; margin: 0 auto 16px; display: block; }
+    .mascot svg { width: 100%; height: 100%; }
+    .mascot-inline { display: inline-block; width: 36px; height: 36px; vertical-align: -8px; margin-left: 6px; }
+    .mascot-inline svg { width: 100%; height: 100%; }
+    .page-title-row { display: flex; align-items: center; gap: 4px; }
+    .clerk-user { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+    .clerk-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
+    .clerk-name { font-weight: 600; }
+    .clerk-sub { font-size: 12px; color: var(--ink-soft); }
+    .empty .e { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+    .empty h3 { font-size: 18px; color: var(--ink); margin-bottom: 6px; }
+    .empty p { font-size: 14px; }
+
+    /* filter pills */
+    .pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+    .pill { font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 999px; background: transparent; color: var(--ink-soft); border: 1px solid var(--line); cursor: pointer; transition: all .12s ease; }
+    .pill:hover { background: var(--bg-soft); }
+    .pill.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+    /* quota meter */
+    .quota { background: var(--bg-soft); border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 14px; display: flex; align-items: center; gap: 10px; font-size: 13px; margin-top: 14px; }
+    .quota-bar { flex: 1; height: 6px; background: var(--card); border-radius: 3px; overflow: hidden; }
+    .quota-fill { height: 100%; background: var(--accent); transition: width .3s ease; }
+
+    /* settings/login (account page) */
+    .account-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .tier-card { background: linear-gradient(135deg, var(--card-2) 0%, var(--bg-soft) 100%); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 22px; }
+    .tier-card.premium { background: linear-gradient(135deg, #2a1f17 0%, #4a2f17 100%); color: #f0d9a8; border-color: #8a4d0a; }
+    [data-theme="light"] .tier-card.premium { background: linear-gradient(135deg, #fef3c7 0%, #fde6c4 100%); color: #5a2e0a; border-color: #d97706; }
+    .tier-card h3 { font-size: 20px; margin-bottom: 4px; }
+    .tier-card .price { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 600; margin: 8px 0; }
+    .tier-card .price small { font-size: 14px; opacity: .7; font-weight: 400; }
+    .tier-card ul { list-style: none; margin: 12px 0 16px; }
+    .tier-card li { padding: 4px 0; font-size: 14px; }
+    .tier-card li::before { content: '✓ '; color: var(--good); font-weight: 700; margin-right: 6px; }
+
+    /* legal page (modals as a section) */
+    .legal { max-width: 720px; }
+    .legal h2 { font-size: 22px; margin: 24px 0 8px; }
+    .legal h3 { font-size: 16px; margin: 18px 0 6px; }
+    .legal p, .legal li { color: var(--ink-soft); font-size: 14px; margin-bottom: 10px; }
+    .legal ul, .legal ol { padding-left: 24px; margin-bottom: 14px; }
+    .legal strong { color: var(--ink); }
+    .legal .updated { font-size: 12px; color: var(--ink-faint); margin-bottom: 16px; }
+
+    /* responsive */
+    @media (max-width: 768px) {
+      .shell { grid-template-columns: 1fr; }
+      aside.sidebar { position: static; height: auto; flex-direction: row; flex-wrap: wrap; padding: 16px; }
+      .nav { flex-direction: row; flex-wrap: wrap; flex: 1; }
+      main { padding: 24px 20px 60px; }
+      .avatar-stage, .account-grid { grid-template-columns: 1fr; }
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div>
+        <div class="brand">
+          <div class="brand-mark">unsent</div>
+          <div class="brand-tag">v1</div>
+        </div>
+      </div>
+
+      <div class="me-card" id="meCard">
+        <div class="me-row">
+          <div class="me-name" id="meName">—</div>
+          <span class="tier-pill" id="meTier" style="display:none">free</span>
+        </div>
+        <div class="me-meta">
+          <span class="dot" id="meDot"></span>
+          <span id="meStatus">—</span>
+        </div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn btn-outline btn-sm" id="themeToggle" title="Toggle theme" style="flex:1">Theme</button>
+          <button class="btn btn-ghost btn-sm" id="accountBtn" style="flex:1">Account</button>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <div class="nav-section">Express</div>
+        <button class="nav-item active" data-surface="vent">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12c0-4.5 4-8 9-8s9 3.5 9 8-4 8-9 8c-1.5 0-3-.3-4.3-.8L3 21l1.5-4.5C3.5 15 3 13.5 3 12z"/></svg>
+          Vents
+          <span class="badge" id="badge-vents">0</span>
+        </button>
+        <button class="nav-item" data-surface="unsent">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8"/></svg>
+          Unsent
+          <span class="badge" id="badge-unsent">0</span>
+        </button>
+        <button class="nav-item" data-surface="journal">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12a4 4 0 014 4v12H8a4 4 0 01-4-4V4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+          Journal
+          <span class="badge" id="badge-journal">0</span>
+        </button>
+        <button class="nav-item" data-surface="companion">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg>
+          Companion
+        </button>
+
+        <div class="nav-section">Body</div>
+        <button class="nav-item" data-surface="mood">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/></svg>
+          Mood
+          <span class="badge" id="badge-mood">0</span>
+        </button>
+        <button class="nav-item" data-surface="affirmations">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 6 6.5.5-5 4.5 1.5 6.5L12 16l-5.5 3.5L8 13 3 8.5 9.5 8z"/></svg>
+          Affirmations
+        </button>
+        <button class="nav-item" data-surface="coping">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h6l2-3 4 6 2-3h2"/></svg>
+          Coping
+        </button>
+        <button class="nav-item" data-surface="intentions">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/></svg>
+          Intentions
+        </button>
+
+        <div class="nav-section">You</div>
+        <button class="nav-item" data-surface="avatar">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
+          Aria
+        </button>
+        <button class="nav-item" data-surface="data">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
+          Data
+        </button>
+        <button class="nav-item" data-surface="account">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1l3 6 6 1-4.5 4 1 6L12 15l-5.5 3 1-6L3 8l6-1z"/></svg>
+          Account
+        </button>
+      </nav>
+
+      <div class="sidebar-tools">
+        <div class="footer-note">
+          Say what you can't send.<br/>
+          <a href="#" data-legal="terms">Terms</a> · <a href="#" data-legal="privacy">Privacy</a> · <a href="#" data-legal="health">Health notice</a> · <a href="#" data-legal="ai">AI</a>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <!-- VENT -->
+      <section class="surface active" data-surface="vent">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A room with no one in it</div>
+            <h1 class="page-title">Vents</h1>
+            <p class="page-sub">Let it out. No one is reading. We don't even save your drafts.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="field">
+            <label>Title (optional)</label>
+            <input id="vent-title" placeholder="give it a name, or don't" maxlength="120" />
+          </div>
+          <div class="field">
+            <label>What's wrong</label>
+            <textarea id="vent-body" class="body" placeholder="Start typing. Get it out of your head."></textarea>
+          </div>
+          <div class="row-3" style="margin-top:14px">
+            <div class="field">
+              <label>Mood</label>
+              <select id="vent-mood">
+                <option value="">— pick one —</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Intensity <span id="vent-intensity-val" style="color:var(--accent)">5</span></label>
+              <input type="range" id="vent-intensity" min="1" max="10" value="5" style="padding:0;height:36px" />
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end">
+              <button class="btn btn-accent" id="vent-save" style="width:100%">Release it</button>
+            </div>
+          </div>
+        </div>
+        <div class="quota" id="vent-quota" style="display:none">
+          <span id="vent-quota-text">0 / 3 used today</span>
+          <div class="quota-bar"><div class="quota-fill" id="vent-quota-fill" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:24px" id="vent-list"></div>
+      </section>
+
+      <!-- UNSENT -->
+      <section class="surface" data-surface="unsent">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">The message you can't send</div>
+            <h1 class="page-title">Unsent</h1>
+            <p class="page-sub">Write it like they might read it. Then choose what to do with it.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div class="field">
+              <label>To</label>
+              <input id="unsent-to" placeholder="their name" />
+            </div>
+            <div class="field">
+              <label>Shape</label>
+              <select id="unsent-shape">
+                <option value="letter">letter</option>
+                <option value="apology">apology</option>
+                <option value="confession">confession</option>
+                <option value="goodbye">goodbye</option>
+                <option value="thank_you">thank you</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:14px">
+            <label>Say it</label>
+            <textarea id="unsent-body" class="body" placeholder="Say it the way you wish you could say it."></textarea>
+          </div>
+          <div class="btn-row" style="margin-top:14px">
+            <button class="btn btn-accent" id="unsent-save">Save it</button>
+          </div>
+        </div>
+        <div class="pills" id="unsent-pills" style="margin-top:24px">
+          <button class="pill active" data-filter="all">all</button>
+          <button class="pill" data-filter="private">private</button>
+          <button class="pill" data-filter="deleted">released</button>
+        </div>
+        <div id="unsent-list" style="margin-top:6px"></div>
+      </section>
+
+      <!-- JOURNAL -->
+      <section class="surface" data-surface="journal">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A page a day</div>
+            <h1 class="page-title">Journal</h1>
+            <p class="page-sub">The version of events as you remember them. Prompts are optional.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div class="field">
+              <label>Title</label>
+              <input id="journal-title" placeholder="today in one line" />
+            </div>
+            <div class="field">
+              <label>Prompt</label>
+              <select id="journal-prompt">
+                <option value="">no prompt</option>
+                <option>What's one thing that landed today?</option>
+                <option>What did I avoid saying?</option>
+                <option>What am I making too big?</option>
+                <option>What's working that I keep dismissing?</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:14px">
+            <label>Entry</label>
+            <textarea id="journal-body" class="body" placeholder="Write to yourself like you'd write to a friend."></textarea>
+          </div>
+          <div class="btn-row" style="margin-top:14px">
+            <button class="btn btn-accent" id="journal-save">Save entry</button>
+          </div>
+        </div>
+        <div id="journal-list" style="margin-top:24px"></div>
+      </section>
+
+      <!-- MOOD -->
+      <section class="surface" data-surface="mood">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A check-in, not a verdict</div>
+            <h1 class="page-title">Mood</h1>
+            <p class="page-sub">Name it to know it. Log it to see the pattern.</p>
+          </div>
+        </div>
+        <div class="card">
+          <label>How are you, right now</label>
+          <div class="mood-grid" id="mood-picker"></div>
+          <div class="row-3" style="margin-top:16px">
+            <div class="field">
+              <label>Intensity <span id="mood-intensity-val" style="color:var(--accent)">5</span></label>
+              <input type="range" id="mood-intensity" min="1" max="10" value="5" style="padding:0;height:36px" />
+            </div>
+            <div class="field">
+              <label>Triggers (comma-separated)</label>
+              <input id="mood-triggers" placeholder="work, mom, traffic" />
+            </div>
+            <div class="field">
+              <label>&nbsp;</label>
+              <button class="btn btn-accent" id="mood-save" style="width:100%" disabled>Log it</button>
+            </div>
+          </div>
+          <div class="field" style="margin-top:14px">
+            <label>Note (optional)</label>
+            <textarea id="mood-notes" style="min-height:80px" placeholder="a sentence about now"></textarea>
+          </div>
+        </div>
+        <div class="card" style="margin-top:24px">
+          <h3 style="font-size:16px;margin-bottom:12px">Last 7 check-ins</h3>
+          <div class="mood-history" id="mood-history"></div>
+        </div>
+      </section>
+
+      <!-- AFFIRMATIONS -->
+      <section class="surface" data-surface="affirmations">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">Words to come back to</div>
+            <h1 class="page-title">Affirmations</h1>
+            <p class="page-sub">Saved for the days you need to hear them. Add your own.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div class="field">
+              <label>New affirmation</label>
+              <textarea id="affirm-new" style="min-height:80px" placeholder="I am..."></textarea>
+            </div>
+            <div class="field">
+              <label>Tags (comma-separated)</label>
+              <input id="affirm-tags" placeholder="self-worth, calm" />
+              <button class="btn btn-accent" id="affirm-save" style="width:100%;margin-top:14px">Save</button>
+            </div>
+          </div>
+        </div>
+        <div class="pills" id="affirm-pills" style="margin-top:24px">
+          <button class="pill active" data-mood="">all</button>
+          <button class="pill" data-mood="anxious">anxious</button>
+          <button class="pill" data-mood="sad">sad</button>
+          <button class="pill" data-mood="angry">angry</button>
+          <button class="pill" data-mood="low">low</button>
+          <button class="pill" data-mood="numb">numb</button>
+        </div>
+        <div class="aff-grid" id="affirm-list" style="margin-top:6px"></div>
+      </section>
+
+      <!-- COMPANION -->
+      <section class="surface" data-surface="companion">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A friend, not a therapist</div>
+            <div class="page-title-row">
+              <h1 class="page-title">Aria</h1>
+              <span class="mascot-inline" id="mascotCrane" aria-hidden="true"></span>
+            </div>
+            <p class="page-sub">A friend who listens and remembers. Not a coach, not a clinician. She will not ask you diagnostic questions or push coping exercises on you.</p>
+          </div>
+        </div>
+        <div class="aria-orb" id="ariaOrb">
+          <div class="aria-orb-icon">
+            <svg viewBox="0 0 64 64" fill="none">
+              <circle cx="32" cy="32" r="28" fill="rgba(255,255,255,0.2)"/>
+              <path d="M16 22h32v22H26l-10 8z" fill="white" opacity="0.95"/>
+              <circle cx="26" cy="30" r="2" fill="#9a3412"/>
+              <circle cx="38" cy="30" r="2" fill="#9a3412"/>
+              <path d="M25 36c2 2 5 3 7 3s5-1 7-3" stroke="#9a3412" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
+          </div>
+          <div>
+            <div class="aria-orb-name">Aria</div>
+            <div class="aria-orb-status"><span class="live" id="ariaLive">●</span> <span id="ariaMood">here, listening</span></div>
+          </div>
+          <div class="aria-orb-meta" id="ariaMeta">remembers nothing yet</div>
+        </div>
+        <div id="crisis-container"></div>
+        <div class="card">
+          <div class="chat" id="chat"></div>
+          <div class="chat-input">
+            <textarea id="chat-input" placeholder="What's on your mind? (Shift+Enter for newline)" style="min-height:60px"></textarea>
+            <button class="btn btn-accent" id="chat-send" style="align-self:flex-end">Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- COPING -->
+      <section class="surface" data-surface="coping">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">Small things that help</div>
+            <h1 class="page-title">Coping</h1>
+            <p class="page-sub">Log the tools you reach for. See what actually works.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row-3">
+            <div class="field">
+              <label>Tool</label>
+              <select id="coping-tool">
+                <option value="breath_478">4-7-8 breath</option>
+                <option value="box_breath">box breath</option>
+                <option value="ground_54321">5-4-3-2-1 grounding</option>
+                <option value="walk">walk</option>
+                <option value="shower">cold shower</option>
+                <option value="call_friend">call a friend</option>
+                <option value="journal_freewrite">freewrite</option>
+                <option value="music">music</option>
+                <option value="stretch">stretch</option>
+                <option value="meditation">meditation</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Duration (sec)</label>
+              <input type="number" id="coping-duration" min="1" max="7200" value="120" />
+            </div>
+            <div class="field">
+              <label>Helpful?</label>
+              <select id="coping-helpful">
+                <option value="null">—</option>
+                <option value="true">yes</option>
+                <option value="false">no</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-accent" id="coping-save" style="margin-top:14px">Log session</button>
+        </div>
+        <div id="coping-list" style="margin-top:24px"></div>
+      </section>
+
+      <!-- INTENTIONS -->
+      <section class="surface" data-surface="intentions">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A small commitment</div>
+            <h1 class="page-title">Intentions</h1>
+            <p class="page-sub">Tiny, specific, doable. Less "be happier", more "drink water before 10".</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div class="field">
+              <label>Kind</label>
+              <select id="intention-kind">
+                <option value="do">do</option>
+                <option value="avoid">avoid</option>
+                <option value="remember">remember</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Body</label>
+              <input id="intention-body" placeholder="drink water before 10am" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:14px">
+            <div class="field">
+              <label>Cadence</label>
+              <select id="intention-cadence">
+                <option value="daily">daily</option>
+                <option value="weekly">weekly</option>
+                <option value="one_off">one-off</option>
+              </select>
+            </div>
+            <div class="field" style="display:flex;align-items:flex-end">
+              <button class="btn btn-accent" id="intention-save" style="width:100%">Set</button>
+            </div>
+          </div>
+        </div>
+        <div id="intention-list" style="margin-top:24px"></div>
+      </section>
+
+      <!-- ARIA (avatar) -->
+      <section class="surface" data-surface="avatar">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">A face for the work</div>
+            <h1 class="page-title">Aria</h1>
+            <p class="page-sub">She is the friend on the Companion page. You can change how she looks. This isn't for sharing, it's for you.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="avatar-stage">
+            <div class="avatar-frame" id="avatarFrame">
+              <div class="glow"></div>
+              <svg viewBox="0 0 400 400" id="ariaSvg">
+                <g class="aria-head">
+                  <!-- neck -->
+                  <rect x="170" y="290" width="60" height="60" fill="var(--skin)" rx="6"/>
+                  <!-- shoulders / body -->
+                  <path d="M 80 400 Q 80 320 200 320 Q 320 320 320 400 Z" fill="var(--aria-clothes)"/>
+                  <!-- head -->
+                  <ellipse cx="200" cy="200" rx="110" ry="125" fill="var(--skin)"/>
+                  <!-- hair back -->
+                  <path d="M 90 180 Q 90 70 200 70 Q 310 70 310 180 L 310 270 Q 280 250 200 250 Q 120 250 90 270 Z" fill="var(--hair)"/>
+                  <!-- hair fringe -->
+                  <path d="M 100 150 Q 130 80 200 90 Q 270 80 300 150 Q 280 130 240 145 Q 200 110 160 145 Q 120 130 100 150 Z" fill="var(--hair)"/>
+                  <!-- ears -->
+                  <ellipse cx="92" cy="210" rx="14" ry="22" fill="var(--skin)"/>
+                  <ellipse cx="308" cy="210" rx="14" ry="22" fill="var(--skin)"/>
+                  <!-- eyes -->
+                  <g class="aria-eyes">
+                    <ellipse cx="160" cy="200" rx="10" ry="12" fill="var(--ink)"/>
+                    <ellipse cx="240" cy="200" rx="10" ry="12" fill="var(--ink)"/>
+                    <circle cx="163" cy="197" r="3" fill="white"/>
+                    <circle cx="243" cy="197" r="3" fill="white"/>
+                  </g>
+                  <!-- brows -->
+                  <path d="M 145 178 Q 160 172 178 178" stroke="var(--hair)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  <path d="M 222 178 Q 240 172 255 178" stroke="var(--hair)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  <!-- nose -->
+                  <path d="M 200 215 L 195 240 Q 200 245 205 240 Z" fill="var(--skin-shadow)" opacity="0.5"/>
+                  <!-- mouth -->
+                  <g class="aria-mouth">
+                    <path d="M 175 268 Q 200 280 225 268" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  </g>
+                  <!-- glasses (conditional) -->
+                  <g id="glassesGroup">
+                    <circle cx="160" cy="200" r="28" fill="none" stroke="var(--glasses)" stroke-width="3"/>
+                    <circle cx="240" cy="200" r="28" fill="none" stroke="var(--glasses)" stroke-width="3"/>
+                    <line x1="188" y1="200" x2="212" y2="200" stroke="var(--glasses)" stroke-width="3"/>
+                  </g>
+                  <!-- cheek blush -->
+                  <ellipse cx="140" cy="240" rx="18" ry="10" fill="var(--accent-soft)" opacity="0.5"/>
+                  <ellipse cx="260" cy="240" rx="18" ry="10" fill="var(--accent-soft)" opacity="0.5"/>
+                </g>
+              </svg>
+            </div>
+            <div class="opts">
+              <div>
+                <h4>Skin tone</h4>
+                <div class="swatches" id="opt-skin"></div>
+              </div>
+              <div>
+                <h4>Hair color</h4>
+                <div class="swatches" id="opt-hair"></div>
+              </div>
+              <div>
+                <h4>Glasses</h4>
+                <div class="swatches" id="opt-glasses"></div>
+              </div>
+              <div>
+                <h4>Expression</h4>
+                <div class="swatches" id="opt-expression"></div>
+              </div>
+              <div style="padding-top:8px;border-top:1px solid var(--line)">
+                <p style="font-size:12px;color:var(--ink-faint);line-height:1.5">Aria's eyes blink, head breathes, mouth moves when she speaks. Glasses and expression reflect how she shows up for you.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ACCOUNT -->
+      <section class="surface" data-surface="account">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">Sign in, upgrade, sign out</div>
+            <h1 class="page-title">Account</h1>
+            <p class="page-sub">Your data stays yours. Premium unlocks unlimited vents and an AI with memory.</p>
+          </div>
+        </div>
+
+        <div id="ageGate" class="card" style="display:none">
+          <h3 style="font-size:16px;margin-bottom:8px">Are you 18 or older?</h3>
+          <p style="color:var(--ink-soft);font-size:14px;margin-bottom:14px">Unsent is for adults. By continuing you confirm you are 18 or older, and you understand the <a href="#" data-legal="health" style="color:var(--accent)">health notice</a> and <a href="#" data-legal="ai" style="color:var(--accent)">AI disclosure</a>.</p>
+          <div class="btn-row">
+            <button class="btn btn-accent" id="ageYes">I am 18 or older</button>
+            <button class="btn btn-outline" id="ageNo">I am under 18</button>
+          </div>
+        </div>
+
+        <div id="authCard" class="card">
+          <h3 style="font-size:16px;margin-bottom:8px">Sign in with Clerk</h3>
+          <p style="color:var(--ink-soft);font-size:14px;margin-bottom:14px">Sign in to sync your data across devices and unlock Premium. If you do not see the sign-in widget, you are in <strong>dev mode</strong> (no Clerk keys configured).</p>
+          <div id="clerkMount"></div>
+          <div class="btn-row" id="devAuthRow" style="display:none">
+            <button class="btn btn-accent" id="devSignIn">Continue as local_user (dev)</button>
+          </div>
+          <div id="clerkPasteRow" hidden style="margin-top:16px;padding-top:14px;border-top:1px dashed var(--border)">
+            <h4 style="font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:8px">Dev tools</h4>
+            <label style="display:block;font-size:13px;color:var(--ink-soft);margin-bottom:4px">Clerk publishable key (pk_test_... or pk_live_...)</label>
+            <div class="btn-row" style="margin-bottom:12px">
+              <input id="clerkKeyInput" type="text" placeholder="pk_test_..." style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--ink);font-size:13px;font-family:var(--mono)"/>
+              <button class="btn btn-outline btn-sm" id="clerkKeySave">Save</button>
+            </div>
+            <label style="display:block;font-size:13px;color:var(--ink-soft);margin-bottom:4px">Or paste a Clerk session JWT</label>
+            <div class="btn-row">
+              <input id="clerkTokenInput" type="text" placeholder="eyJhbGci..." style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface-2);color:var(--ink);font-size:12px;font-family:var(--mono)"/>
+              <button class="btn btn-accent btn-sm" id="clerkTokenSave">Use token</button>
+              <button class="btn btn-outline btn-sm" id="clerkTokenClear">Clear</button>
+            </div>
+            <p id="clerkStatus" style="margin-top:10px;font-size:12px;color:var(--ink-soft)"></p>
+            <div class="btn-row" style="margin-top:10px">
+              <button class="btn btn-outline btn-sm" id="clerkSignOut">Sign out</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="account-grid" style="margin-top:14px">
+          <div class="tier-card">
+            <h3>Free</h3>
+            <div class="price">$0<small>/mo</small></div>
+            <ul>
+              <li>3 vents per day</li>
+              <li>Unlimited unsent, journal, mood, coping</li>
+              <li>15 preset affirmations</li>
+              <li>Aria with no memory</li>
+              <li>Export and wipe your data</li>
+            </ul>
+            <button class="btn btn-outline" disabled id="freeBtn">Your current plan</button>
+          </div>
+          <div class="tier-card premium">
+            <h3>Premium</h3>
+            <div class="price">$4<small>/mo</small></div>
+            <ul>
+              <li>Unlimited vents</li>
+              <li>Aria remembers what you share</li>
+              <li>Priority AI response</li>
+              <li>Support indie dev (me)</li>
+            </ul>
+            <button class="btn btn-accent" id="upgradeBtn">Upgrade with Clerk</button>
+            <p id="premiumNote" style="font-size:12px;margin-top:10px;opacity:.8;display:none">In dev mode the upgrade button is disabled.</p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3 style="font-size:16px;margin-bottom:8px">Your privacy</h3>
+          <p style="color:var(--ink-soft);font-size:14px;margin-bottom:10px">Aria only sees the last 12 vents and unsent messages you wrote. She never sees your journal, your mood log, or anything you marked deleted. Her memory extracts roles (mom, boss, ex), never names.</p>
+          <div class="btn-row">
+            <button class="btn btn-ghost btn-sm" data-legal="terms">Terms</button>
+            <button class="btn btn-ghost btn-sm" data-legal="privacy">Privacy</button>
+            <button class="btn btn-ghost btn-sm" data-legal="health">Health notice</button>
+            <button class="btn btn-ghost btn-sm" data-legal="ai">AI disclosure</button>
+            <button class="btn btn-ghost btn-sm" data-legal="refunds">Refunds</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- DATA -->
+      <section class="surface" data-surface="data">
+        <div class="page-head">
+          <div class="ph-text">
+            <div class="page-eyebrow">Yours, fully</div>
+            <h1 class="page-title">Data</h1>
+            <p class="page-sub">Export everything. Wipe everything. No friction, no questions.</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size:16px;margin-bottom:8px">Export</h3>
+          <p style="color:var(--ink-soft);font-size:14px;margin-bottom:14px">Download every vent, unsent, journal entry, mood, affirmation, and coping session as JSON.</p>
+          <button class="btn btn-outline" id="export-btn">Download JSON</button>
+        </div>
+        <div class="card" style="border-color:#f1d4d4;background:color-mix(in srgb, var(--bad) 6%, var(--card))">
+          <h3 style="font-size:16px;margin-bottom:8px;color:var(--bad)">Wipe everything</h3>
+          <p style="color:var(--ink-soft);font-size:14px;margin-bottom:14px">Permanently deletes your data from this server. This cannot be undone.</p>
+          <div class="field" style="max-width:300px">
+            <label>Type DELETE to confirm</label>
+            <input id="wipe-confirm-input" placeholder="DELETE" autocomplete="off" />
+          </div>
+          <button class="btn" id="wipe-btn" style="background:var(--bad);color:white" disabled>Wipe my data</button>
+        </div>
+      </section>
+
+      <!-- LEGAL pages -->
+      <section class="surface" data-surface="legal">
+        <div class="legal" id="legalContent"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script type="module" src="/app/app.js"></script>
+</body>
+</html>

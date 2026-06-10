@@ -1,25 +1,14 @@
 {
-  "name": "unsent-backend",
+  "name": "unsent",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "engines": {
-    "node": ">=20"
-  },
+  "description": "Unsent — a private place to say what you can't send. Backend API + native mobile shell.",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js",
-    "seed": "node src/seed.js",
-    "test": "node --test tests/*.test.js"
-  },
-  "dependencies": {
-    "@clerk/fastify": "^3.1.33",
-    "@fastify/cors": "^10.0.1",
-    "@fastify/multipart": "^9.0.1",
-    "@fastify/static": "^8.0.4",
-    "dotenv": "^16.4.7",
-    "fastify": "^5.2.0",
-    "svix": "^1.95.2",
-    "zod": "^3.24.1"
+    "dev": "cd backend && pnpm dev",
+    "test": "cd backend && pnpm test",
+    "seed": "cd backend && pnpm seed",
+    "mobile:sync": "cd mobile && npx cap sync",
+    "mobile:android": "cd mobile && npx cap open android",
+    "mobile:ios": "cd mobile && npx cap open ios"
   }
 }

@@ -1,141 +1,148 @@
-# Unsent Backend
+# Unsent
 
-Local-first Fastify + SQLite API for the **Unsent** emotional-support app.
-All user data stays on this server; the only thing that talks to the outside
-world is the optional AI companion (OpenRouter or Groq, both free tiers).
+A private place to say what you can't send.
 
-- **Stack:** Node 20+, Fastify 5, `node:sqlite` (built-in, no native build),
-  Zod for validation, `@clerk/fastify` for auth.
-- **Auth:** Clerk. Runs in dev mode as a single `local_user` when no
-  `CLERK_SECRET_KEY` is set.
-- **DB:** single SQLite file at `data/unsent.db` (WAL mode).
+Unsent is a journaling and venting app with an AI companion (Aria) that listens and remembers, crisis-detection on every message, and a native iOS + Android shell built with Capacitor around the same web client.
+
+**This is a monorepo.** It contains the API server and the mobile client in one git history.
+
+```
+unsent/
+├── backend/         # Fastify API + SQLite + Clerk auth
+│   ├── src/
+│   │   ├── server.js       # boot, auth preHandler, /api/* routes
+│   │   ├── auth.js         # Clerk token verify + dev-mode fallback
+│   │   ├── db/             # SQLite schema + connection
+│   │   ├── routes/         # 13 route files (vents, unsent, journal, mood, ...)
+│   │   ├── presets.js      # 15 affirmation presets, shared
+│   │   ├── seed.js         # `pnpm seed` CLI, idempotent
+│   │   └── util.js         # withParams, withBody, free-vent quota helpers
+│   ├── tests/              # node:test, 37 tests, 100% passing
+│   ├── package.json
+│   └── README.md           # backend-specific docs
+└── mobile/          # Web client + native shell
+    ├── www/                # index.html, app.js, voice.js, clerk.js (no build)
+    ├── android/            # Capacitor Android project — open in Android Studio
+    ├── ios/                # Capacitor iOS project — open in Xcode (Mac only)
+    ├── capacitor.config.json
+    └── package.json
+```
 
 ## Quick start
 
 ```bash
-pnpm install
-cp .env.example .env       # then edit
-pnpm dev                   # http://127.0.0.1:4000
+# 1. Install backend deps
+cd backend && pnpm install
+
+# 2. Start the API in dev mode (auto-authenticates as `local_user`)
+pnpm dev
+# → http://127.0.0.1:4000
+# → demo client at http://127.0.0.1:4000/app/
+
+# 3. Seed the 15 affirmation presets (idempotent)
+pnpm seed
+
+# 4. Run the test suite (37 tests)
+pnpm test
 ```
 
-Without any keys, the server boots in **dev mode** and every request runs
-as `local_user`. You'll see a loud warning in the logs.
-
-## Auth modes
-
-| Mode    | Triggered by                      | `req.userId`        | `req.authMode` |
-|---------|-----------------------------------|---------------------|----------------|
-| dev     | `CLERK_SECRET_KEY` is empty       | `"local_user"`      | `"dev"`        |
-| clerk   | `CLERK_SECRET_KEY=sk_test_...`    | Clerk `user_xxx` id | `"clerk"`      |
-
-In Clerk mode every `/api/*` route (except `/api/health` and `/api/ai/status`)
-requires a Clerk session token via:
+To use real Clerk auth, copy `backend/.env.example` to `backend/.env` and set:
 
 ```
-Authorization: Bearer <sessionToken>
+CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
 ```
 
-or the `__session` cookie that Clerk's front-end SDK sets automatically.
+Restart the server. With both keys set, the server fails closed — no token returns 401.
 
-The token's `sub` claim (the Clerk user id) is used as the database primary
-key for `settings.user_id` and is created on first authenticated request.
+## API surface
 
-### Setting up Clerk
+| Endpoint | Auth | Notes |
+|---|---|---|
+| `GET  /api/health` | public | liveness |
+| `GET  /api/me` | auth | user id, auth mode, premium status |
+| `GET  /api/meta` | public | static option lists (moods, skin, hair, glasses, expressions, coping tools, affirmation mood filters) |
+| `GET  /` | public | endpoint list, auth mode, version |
+| `GET  /app/` | public | the demo web client (static) |
+| `GET  /api/avatar` | auth | returns the user's avatar with `meta: { skin, hair, glasses, expressions }` under a separate `meta` key so saved values aren't shadowed by the option arrays |
+| `PATCH /api/avatar` | auth | skin tone, hair color, glasses, expression |
+| `GET/POST /api/vents` | auth | 3/day free quota; premium = unlimited |
+| `GET  /api/unsent?outcome=&shape=` | auth | filterable |
+| `GET  /api/journal` | auth | 12 most recent vents + unsent messages feed Aria's memory |
+| `GET  /api/mood` | auth | mood check-ins with `intensity` |
+| `GET  /api/affirmations?mood=` | auth | filterable by mood_filter |
+| `GET  /api/intentions` | auth | toggle daily intentions |
+| `GET  /api/coping` | auth | coping session log |
+| `POST /api/ai/companion` | auth | mock provider by default; wire your own OpenAI key in `src/server.js` or point at 9router (http://127.0.0.1:9545) |
+| `POST /api/ai/crisis-check` | auth | flags suicidal/self-harm content, returns 988 resources |
+| `GET  /api/export` | auth | full JSON bundle of user data |
+| `POST /api/wipe` | auth | requires `confirm: "DELETE"` in body |
 
-1. Create an app at https://dashboard.clerk.com.
-2. Copy the **Secret key** into `.env`:
-   ```
-   CLERK_SECRET_KEY=sk_test_...
-   CLERK_PUBLISHABLE_KEY=pk_test_...   # for the front-end
-   ```
-3. In the Clerk dashboard, add `http://127.0.0.1:4000` to allowed origins.
-4. From your front-end, get a session token with
-   `await window.Clerk.session?.getToken()` and send it as
-   `Authorization: Bearer ***`.
+## Mobile (Capacitor)
 
-## API
+The web client is a single `index.html` + `app.js` (no build step). Capacitor wraps it as a native iOS/Android app.
 
-All authenticated routes return `req.userId` as a string — pass it back
-in subsequent requests via your session.
-
-| Method | Path                            | Notes                                     |
-|--------|---------------------------------|-------------------------------------------|
-| GET    | `/`                             | service info + endpoint list              |
-| GET    | `/api/health`                   | liveness (public)                         |
-| GET    | `/api/me`                       | current user + auth mode                  |
-| GET    | `/api/home`                     | dashboard payload (vents, journal, mood)  |
-| GET    | `/api/settings`                 | settings (no `app_lock_pin_hash`)         |
-| PATCH  | `/api/settings`                 | partial update                            |
-| GET    | `/api/avatar`                   | current avatar + available options        |
-| PATCH  | `/api/avatar`                   | update; rejects `source: "realistic"`     |
-| GET    | `/api/vents`                    | paginated, `?limit=&offset=`              |
-| POST   | `/api/vents`                    | 3/day free tier, returns 402 if capped    |
-| GET    | `/api/vents/:id`                |                                           |
-| PATCH  | `/api/vents/:id`                | mark released / saved-as-journal          |
-| DELETE | `/api/vents/:id`                |                                           |
-| GET    | `/api/unsent`                   | filter `?shape=breakup` etc.              |
-| POST   | `/api/unsent`                   |                                           |
-| PATCH  | `/api/unsent/:id`               | rewrite / change outcome                  |
-| DELETE | `/api/unsent/:id`               |                                           |
-| GET    | `/api/journal`                  | paginated, `?kind=gratitude` etc.         |
-| POST   | `/api/journal`                  |                                           |
-| PATCH  | `/api/journal/:id`              |                                           |
-| DELETE | `/api/journal/:id`              |                                           |
-| GET    | `/api/mood`                     | recent check-ins                          |
-| GET    | `/api/mood/today`               |                                           |
-| GET    | `/api/mood/week`                | last 7 days                               |
-| POST   | `/api/mood`                     |                                           |
-| DELETE | `/api/mood/:id`                 |                                           |
-| GET    | `/api/affirmations`             | `?mood=`, `?favorites=1`                  |
-| POST   | `/api/affirmations/seed-presets`| inserts 15 preset lines (idempotent)      |
-| POST   | `/api/affirmations`             |                                           |
-| PATCH  | `/api/affirmations/:id`         | favorite / re-categorize                  |
-| DELETE | `/api/affirmations/:id`         |                                           |
-| GET    | `/api/intentions`               | `?kind=daily&active=1`                    |
-| POST   | `/api/intentions`               |                                           |
-| PATCH  | `/api/intentions/:id`           |                                           |
-| DELETE | `/api/intentions/:id`           |                                           |
-| GET    | `/api/coping`                   | last 100 sessions                         |
-| POST   | `/api/coping`                   |                                           |
-| GET    | `/api/export`                   | all data, JSON attachment, no PIN hash    |
-| POST   | `/api/wipe`                     | body `{ "confirm": "DELETE" }`            |
-| POST   | `/api/ai/companion`             | `{ text, mood?, history?, persist? }`     |
-| POST   | `/api/ai/crisis-check`          | pre-check, returns 988-Lifeline etc.      |
-| GET    | `/api/ai/status`                | which AI is wired                         |
-
-## Errors
-
-All errors come back as JSON with a stable shape:
-
-```json
-{ "error": "validation_failed", "details": { "fieldErrors": {...} } }
+```bash
+cd mobile
+npm install
+npx cap sync            # copies www/ + plugin config into android/ and ios/
+npx cap open android    # opens in Android Studio
+npx cap open ios        # opens in Xcode (Mac only)
 ```
 
-| `error`                 | Status | When                                            |
-|-------------------------|--------|-------------------------------------------------|
-| `unauthenticated`       | 401    | Clerk mode, no token                            |
-| `invalid_token`         | 401    | Clerk mode, token rejected                      |
-| `validation_failed`     | 400    | Zod schema failed                               |
-| `not_found`             | 404    | id doesn't exist for this user                  |
-| `free_tier_limit_reached` | 402  | 3rd vent of the day on free tier                |
-| `forbidden_source`      | 400    | avatar `source` is `realistic`                  |
-| `confirmation_required` | 400    | `/api/wipe` called without `confirm: "DELETE"`  |
+**In dev**, the Capacitor config points at `http://10.0.2.2:4000/app/` (Android emulator's host loopback) so the app live-reloads from the Fastify server. For iOS dev, change `server.url` in `capacitor.config.json` to your Mac's LAN IP.
 
-## Data model
+**For production builds**, remove the `server` block from `capacitor.config.json` and run `npx cap sync` to bundle the web assets.
 
-11 tables, all keyed on `user_id` (TEXT). See `src/db/schema.js` for the
-full DDL. `app_lock_pin_hash` is the only sensitive field; it's stripped
-from `/api/settings` and `/api/export` responses.
+### Native features wired in
 
-## Privacy
+- Microphone permission requested at first voice input
+- `RECORD_AUDIO` (Android) + `NSMicrophoneUsageDescription` (iOS) declared in native manifests with copy explaining audio is transcribed on-device
+- `@capacitor-community/speech-recognition` for STT (native, on-device)
+- `@capacitor-community/text-to-speech` for TTS (Aria can read her replies out loud)
+- `@capacitor/haptics` — light haptic on voice start
+- `@capacitor/status-bar` — matches the warm paper background
+- `@capacitor/splash-screen` — 800ms launch screen
+- `@capacitor/preferences` — Clerk token persistence across launches
+- `@capacitor/app` — handles back button + deep links on Android
+- `@capacitor/keyboard` — respects safe areas
 
-- No telemetry, no analytics rows.
-- Voice data is never stored; `voice_save_enabled` is OFF by default and
-  `cloud_transcription` is OFF by default.
-- Crisis triggers are stored as a SHA-256 hash prefix (16 hex chars), not
-  the full text.
-- `app_lock_pin_hash` is excluded from every public response.
+## Features
 
-## License
+- **Vents** — free-tier daily quota, premium bypass, mood + intensity, mark released
+- **Unsent messages** — letters you'll never send, mark as "sent" or "deleted"
+- **Journal** — private entries with optional mood, searchable
+- **Mood** — check-ins with intensity, trendable
+- **Affirmations** — 15 presets seeded, favorite + filter by mood
+- **Intentions** — daily tiny goals, toggleable
+- **Coping** — log what tool you used + was it helpful
+- **Aria (companion)** — AI that remembers the last 12 vents/unsent (never journal/mood), crisis-detects every message, gives 988 resources on flag
+- **Avatar** — symbolic SVG avatar with skin/hair/glasses/expression, drawn in code
+- **Voice** — Web Speech API in browser, native plugin on mobile, with TTS for Aria's replies
+- **Theme** — light + warm dark, system preference detection
+- **Export + wipe** — full data portability, one-call account destruction
+- **Clerk** — headless bundle on the frontend, paste-a-JWT dev mode, fail-closed on the backend
 
-Private. Do not redistribute the safety-flag data even if you fork.
+## Tested
+
+37/37 tests passing via `node:test` + `app.inject()`. No external test runner.
+
+```
+ℹ tests 37
+ℹ pass 37
+ℹ fail 0
+```
+
+## Stack
+
+- **Backend**: Node 22, Fastify 5, SQLite (built-in `node:sqlite`), Clerk, zod, pnpm
+- **Client**: vanilla HTML/CSS/JS, no build step
+- **Mobile**: Capacitor 8, @capacitor-community/speech-recognition, @capacitor-community/text-to-speech
+- **Tests**: node:test with Fastify's `app.inject()`
+
+## What's not done (yet)
+
+- Real voice test end-to-end (the code is wired but I never spoke into a mic in this session)
+- Payments (Stripe checkout for premium) — backend already gates on `settings.premium`
+- 9router for free AI — the companion is currently in mock mode
+- Nango for third-party integrations — not needed yet

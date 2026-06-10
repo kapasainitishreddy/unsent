@@ -1,14 +1,41 @@
+# dependencies
 node_modules/
+*/node_modules/
+
+# data
 data/*.db
 data/*.db-*
 data/*.log
+backend/data/*.db
+backend/data/*.db-*
+backend/data/*.log
+
+# secrets
 .env
 .env.local
+backend/.env
+
+# editor
 .DS_Store
 .vscode/
 .idea/
-client/node_modules/
-client/dist/
+
+# build output
+dist/
+build/
 *.log
 coverage/
 .nyc_output/
+
+# capacitor build artifacts
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/captures/
+mobile/android/app/release/
+mobile/ios/Pods/
+mobile/ios/build/
+mobile/ios/DerivedData/
+mobile/ios/*.xcworkspace/xcuserdata/
+mobile/ios/App/build/
