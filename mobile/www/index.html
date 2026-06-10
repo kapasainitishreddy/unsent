@@ -22,6 +22,8 @@
       --ink-faint: #a8a094;
       --line: #e9e1d3;
       --line-soft: #f0e9dc;
+      --border: #e9e1d3;
+      --border-soft: #f0e9dc;
       --accent: #c2410c;
       --accent-soft: #fed7aa;
       --accent-deep: #9a3412;
@@ -53,6 +55,8 @@
       --ink-faint: #7a7264;
       --line: #2f2924;
       --line-soft: #26221e;
+      --border: #2f2924;
+      --border-soft: #26221e;
       --accent: #fb923c;
       --accent-soft: #5a3320;
       --accent-deep: #fdba74;
@@ -226,7 +230,9 @@
       padding: 10px 18px; border-radius: var(--r-sm);
       border: 1px solid transparent; cursor: pointer;
       transition: all .12s ease;
+      min-height: 38px;
     }
+    .btn-lg { padding: 14px 26px; font-size: 15px; min-height: 46px; border-radius: var(--r-md); }
     .btn-primary { background: var(--ink); color: var(--bg); }
     .btn-primary:hover { background: var(--accent); }
     .btn-accent { background: var(--accent); color: white; }
@@ -437,6 +443,8 @@
     .mascot svg { width: 100%; height: 100%; }
     .mascot-inline { display: inline-block; width: 36px; height: 36px; vertical-align: -8px; margin-left: 6px; }
     .mascot-inline svg { width: 100%; height: 100%; }
+    .mascot-slot { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; color: var(--accent, #d67c5c); }
+    .mascot-slot svg { width: 100%; height: 100%; }
     .page-title-row { display: flex; align-items: center; gap: 4px; }
     .clerk-user { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
     .clerk-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; }
@@ -487,6 +495,136 @@
       .avatar-stage, .account-grid { grid-template-columns: 1fr; }
       .row, .row-3 { grid-template-columns: 1fr; }
     }
+
+    /* ============================================================ */
+    /* ONBOARDING                                                   */
+    /* ============================================================ */
+    .onboard {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(214,124,92,0.10), transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(155,138,110,0.10), transparent 50%),
+        var(--bg);
+      padding: 24px; overflow-y: auto;
+    }
+    .onboard[hidden] { display: none !important; }
+    .onboard-card {
+      width: 100%; max-width: 480px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 36px 32px 28px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.18);
+    }
+    .onboard-progress { display: flex; gap: 10px; justify-content: center; margin-bottom: 24px; }
+    .onboard-progress .dot {
+      width: 8px; height: 8px; border-radius: 4px;
+      background: var(--border);
+      transition: background 0.25s, width 0.25s;
+    }
+    .onboard-progress .dot.active { background: var(--accent); width: 28px; border-radius: 4px; }
+    .onboard-greet {
+      font-family: 'Fraunces', serif; font-style: italic;
+      color: var(--accent); font-size: 0.9rem; margin-bottom: 8px;
+    }
+    .onboard-h {
+      font-family: 'Fraunces', serif; font-weight: 600;
+      font-size: 1.6rem; line-height: 1.2; margin: 0 0 8px;
+      color: var(--text);
+    }
+    .onboard-sub { color: var(--text-soft); font-size: 0.95rem; line-height: 1.5; margin: 0 0 24px; }
+    .onboard-input {
+      width: 100%; padding: 14px 16px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif; font-size: 1.05rem;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .onboard-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(214,124,92,0.15);
+    }
+    .mascot-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px;
+    }
+    .mascot-pick {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; padding: 16px 8px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 14px; cursor: pointer;
+      transition: border-color 0.2s, transform 0.1s, background 0.2s;
+      font-family: 'Inter', sans-serif; color: var(--text);
+    }
+    .mascot-pick:hover { transform: translateY(-2px); }
+    .mascot-pick.picked {
+      border-color: var(--accent);
+      background: rgba(214,124,92,0.06);
+    }
+    .mascot-pick svg { width: 48px; height: 48px; }
+    .mascot-pick .label { font-size: 0.82rem; color: var(--text-soft); }
+    .purpose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+    .purpose-cell {
+      text-align: left; padding: 16px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 14px; cursor: pointer;
+      font-family: 'Inter', sans-serif; color: var(--text);
+      transition: border-color 0.2s, transform 0.1s, background 0.2s;
+    }
+    .purpose-cell:hover { transform: translateY(-2px); }
+    .purpose-cell.picked {
+      border-color: var(--accent);
+      background: rgba(214,124,92,0.06);
+    }
+    .purpose-cell .emoji { font-size: 1.6rem; margin-bottom: 6px; }
+    .purpose-cell .name { font-weight: 600; margin-bottom: 2px; }
+    .purpose-cell .desc { font-size: 0.78rem; color: var(--text-soft); line-height: 1.3; }
+    .mood-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; justify-content: center; }
+    .mood-pick {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 999px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--text);
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+    .mood-pick:hover { transform: translateY(-1px); }
+    .mood-pick.picked {
+      border-color: var(--accent);
+      background: rgba(214,124,92,0.08);
+    }
+    .mood-pick .em { font-size: 1.1rem; }
+    .onboard-actions { display: flex; gap: 10px; justify-content: space-between; align-items: center; margin-top: 4px; }
+    .onboard-actions .btn { min-width: 100px; }
+    .onboard-actions .btn-accent { flex: 1; max-width: 260px; }
+    .onboard-actions .btn-ghost { min-width: 44px; padding: 10px 14px; font-size: 18px; }
+
+    /* Aria settings card */
+    .aria-label {
+      display: block;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .08em;
+      color: var(--ink-soft); margin-bottom: 6px; font-weight: 600;
+    }
+    .aria-sub { font-size: 12px; color: var(--ink-soft); min-width: 70px; }
+    .slider-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .slider-row input[type="range"] { accent-color: var(--accent); }
+    .mascot-tile {
+      display: flex; align-items: center; justify-content: center;
+      aspect-ratio: 1; padding: 4px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s, transform 0.1s;
+    }
+    .mascot-tile:hover { transform: translateY(-1px); }
+    .mascot-tile.picked { border-color: var(--accent); background: rgba(214,124,92,0.08); }
+    .mascot-tile svg { width: 100%; height: 100%; }
   </style>
 </head>
 <body>
@@ -1019,6 +1157,45 @@
           </div>
         </div>
 
+        <!-- ARIA SETTINGS — rename, mascot, voice, voice pitch/rate -->
+        <div class="card" style="margin-top:14px" id="ariaCard">
+          <h3 style="font-size:16px;margin-bottom:4px">Aria, your companion</h3>
+          <p style="color:var(--ink-soft);font-size:13px;margin-bottom:14px">Aria is the one who listens. Give her a name, a form, and a voice.</p>
+
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;padding:14px;background:var(--surface-2);border-radius:14px">
+            <div id="ariaAvatarSlot" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center"></div>
+            <div style="flex:1;min-width:0">
+              <div id="ariaNameLabel" style="font-family:'Fraunces',serif;font-size:1.15rem;font-weight:600">Aria</div>
+              <div id="ariaMascotLabel" style="font-size:12px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em">crane</div>
+            </div>
+            <button class="btn btn-outline btn-sm" id="resetOnboardingBtn">Redo intro</button>
+          </div>
+
+          <label class="aria-label">Name</label>
+          <div class="btn-row" style="margin-bottom:14px">
+            <input id="ariaNameInput" type="text" maxlength="24" placeholder="Aria" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--ink);font-size:14px"/>
+            <button class="btn btn-accent btn-sm" id="ariaNameSave">Save</button>
+          </div>
+
+          <label class="aria-label">Form</label>
+          <div id="ariaMascotGrid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:14px"></div>
+
+          <label class="aria-label">Voice <span style="color:var(--ink-soft);font-weight:400;text-transform:none;letter-spacing:0">(browser only)</span></label>
+          <div class="btn-row" style="margin-bottom:6px">
+            <select id="ariaVoiceSelect" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2);color:var(--ink);font-size:13px"></select>
+            <button class="btn btn-outline btn-sm" id="ariaVoiceTest">Test</button>
+          </div>
+
+          <div class="slider-row" style="margin-top:6px">
+            <label class="aria-sub">Pitch <span id="ariaPitchVal">1.0</span></label>
+            <input type="range" id="ariaPitch" min="0.5" max="2" step="0.1" value="1" style="flex:1"/>
+          </div>
+          <div class="slider-row">
+            <label class="aria-sub">Speed <span id="ariaRateVal">1.0</span></label>
+            <input type="range" id="ariaRate" min="0.5" max="2" step="0.1" value="1" style="flex:1"/>
+          </div>
+        </div>
+
         <div class="account-grid" style="margin-top:14px">
           <div class="tier-card">
             <h3>Free</h3>
@@ -1092,6 +1269,85 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <!-- ============================================================ -->
+  <!-- ONBOARDING OVERLAY                                           -->
+  <!-- Shown when settings.onboarding_complete === 0.               -->
+  <!-- 4 steps: name → mascot → purpose → mood.                     -->
+  <!-- ============================================================ -->
+  <div id="onboarding" class="onboard" hidden>
+    <div class="onboard-card">
+      <div class="onboard-progress">
+        <div class="dot active" data-step="1"></div>
+        <div class="dot" data-step="2"></div>
+        <div class="dot" data-step="3"></div>
+        <div class="dot" data-step="4"></div>
+      </div>
+
+      <div class="onboard-step" data-step="1">
+        <div class="onboard-greet">Hi there.</div>
+        <h2 class="onboard-h">What should I call you?</h2>
+        <p class="onboard-sub">A name, a nickname, or just a word. You can change it anytime.</p>
+        <input id="ob-name" type="text" maxlength="24" placeholder="your name" class="onboard-input" />
+        <div class="onboard-actions">
+          <button class="btn btn-ghost" id="ob-theme" type="button" title="Toggle dark mode">☾</button>
+          <button class="btn btn-accent" id="ob-next-1" type="button">Next</button>
+        </div>
+      </div>
+
+      <div class="onboard-step" data-step="2" hidden>
+        <div class="onboard-greet">A friend for the quiet moments.</div>
+        <h2 class="onboard-h">Pick Aria's form</h2>
+        <p class="onboard-sub">Aria is the one who listens. Choose how she looks in your space.</p>
+        <div class="mascot-grid" id="ob-mascots"></div>
+        <div class="onboard-actions">
+          <button class="btn btn-ghost" data-back type="button">Back</button>
+          <button class="btn btn-accent" id="ob-next-2" type="button">Next</button>
+        </div>
+      </div>
+
+      <div class="onboard-step" data-step="3" hidden>
+        <h2 class="onboard-h">What brought you here?</h2>
+        <p class="onboard-sub">We will not store this in a profile. It just helps us set up the right tools.</p>
+        <div class="purpose-grid" id="ob-purposes">
+          <button class="purpose-cell" data-p="releases" type="button">
+            <div class="emoji">🕊️</div>
+            <div class="name">Let things out</div>
+            <div class="desc">Words I cannot say to anyone</div>
+          </button>
+          <button class="purpose-cell" data-p="clarity" type="button">
+            <div class="emoji">🌫️</div>
+            <div class="name">Think clearly</div>
+            <div class="desc">Sort through a tangled head</div>
+          </button>
+          <button class="purpose-cell" data-p="companion" type="button">
+            <div class="emoji">🌙</div>
+            <div class="name">Have someone listen</div>
+            <div class="desc">A quiet presence, not advice</div>
+          </button>
+          <button class="purpose-cell" data-p="health" type="button">
+            <div class="emoji">🩹</div>
+            <div class="name">Track how I am</div>
+            <div class="desc">Mood, sleep, patterns</div>
+          </button>
+        </div>
+        <div class="onboard-actions">
+          <button class="btn btn-ghost" data-back type="button">Back</button>
+          <button class="btn btn-accent" id="ob-next-3" type="button" disabled>Next</button>
+        </div>
+      </div>
+
+      <div class="onboard-step" data-step="4" hidden>
+        <h2 class="onboard-h">How are you arriving?</h2>
+        <p class="onboard-sub">Just so the first thing you see feels right.</p>
+        <div class="mood-row" id="ob-moods"></div>
+        <div class="onboard-actions">
+          <button class="btn btn-ghost" data-back type="button">Back</button>
+          <button class="btn btn-accent" id="ob-finish" type="button" disabled>Begin</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="/app/app.js"></script>
 </body>

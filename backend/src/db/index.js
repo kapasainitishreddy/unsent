@@ -35,6 +35,24 @@ export function openDb(dbPath) {
   const now = Date.now();
   db.exec(SEED_SQL.replaceAll('$now', String(now)));
 
+  // Idempotent column migrations for fields added after the initial schema.
+  // SQLite has no ADD COLUMN IF NOT EXISTS, so we check pragma table_info first.
+  const settingsCols = new Set(
+    db.prepare('PRAGMA table_info(settings)').all().map(c => c.name)
+  );
+  const addCol = (table, col, decl) => {
+    if (table === 'settings' && settingsCols.has(col)) return;
+    try { db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${decl}`); } catch {}
+  };
+  addCol('settings', 'aria_name',          'TEXT NOT NULL DEFAULT \'Aria\'');
+  addCol('settings', 'aria_mascot',        'TEXT NOT NULL DEFAULT \'crane\'');
+  addCol('settings', 'aria_voice',         'TEXT');           // web speech voiceURI
+  addCol('settings', 'voice_pitch',        'REAL NOT NULL DEFAULT 1');
+  addCol('settings', 'voice_rate',         'REAL NOT NULL DEFAULT 1');
+  addCol('settings', 'user_display_name',  'TEXT');
+  addCol('settings', 'onboarding_purpose', 'TEXT');           // 'releases' | 'clarity' | 'companion' | 'health'
+  addCol('settings', 'onboarding_mood',    'TEXT');           // starter mood they picked
+
   _db = db;
   _dbPath = absPath;
   return _db;

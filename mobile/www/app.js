@@ -77,6 +77,21 @@ function toast(msg, kind = '') {
   setTimeout(() => el.className = 'toast ' + kind, 2400);
 }
 
+function applyTheme(theme) {
+  const html = document.documentElement;
+  if (theme === 'system') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    html.dataset.theme = prefersDark ? 'dark' : 'light';
+  } else {
+    html.dataset.theme = theme || 'light';
+  }
+  // keep both toggles in sync (sidebar + onboarding overlay)
+  const sb = document.getElementById('themeToggle');
+  if (sb) sb.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+  const ob = document.getElementById('ob-theme');
+  if (ob) ob.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+}
+
 function when(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -98,6 +113,7 @@ $$('.nav-item').forEach(el => {
     $$('.nav-item').forEach(n => n.classList.toggle('active', n === el));
     $$('.surface').forEach(s => s.classList.toggle('active', s.dataset.surface === target));
     if (target === 'avatar') renderAvatar();
+    if (target === 'account') import('./aria.js').then(m => m.init()).catch(err => console.warn(err));
   });
 });
 
@@ -703,13 +719,13 @@ function mascot(name, bare = false) {
   switch (name) {
     case 'crane': // companion tab — paper crane, soft amber
       return a(`<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <defs><filter id="s1"><feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.15"/></filter></defs>
-        <g fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#s1)">
-          <path d="M20 55 Q15 35 30 25 Q40 18 55 22 L62 18" />
-          <path d="M30 25 Q40 40 55 22" />
-          <path d="M20 55 L35 45 L45 55 Z" fill="var(--accent-soft)" />
-          <circle cx="60" cy="19" r="1.5" fill="var(--accent)" />
-          <path d="M62 18 L66 15" />
+        <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 60 Q38 30 62 18" />
+          <path d="M12 60 L34 50 L46 60 L28 66 Z" fill="currentColor" fill-opacity="0.22" />
+          <path d="M34 50 Q42 34 60 20" />
+          <circle cx="61.5" cy="18.5" r="2" fill="currentColor" />
+          <path d="M63 17 L70 14" />
+          <path d="M40 44 L46 38" opacity="0.6" />
         </g>
       </svg>`);
     case 'moon': // journal tab — crescent moon with a tiny star
@@ -893,4 +909,63 @@ function attachMic(textarea, { append = false } = {}) {
     toast('Could not load: ' + e.message, 'error');
     console.error(e);
   }
+
+  // run first-run onboarding if needed (loads its own module).
+  // attach window.* FIRST so onboarding can find api/state/mascot.
+  window.api          = api;
+  window.$            = $;
+  window.state        = state;
+  window.toast        = toast;
+  window.mascot       = mascot;
+  window.renderChat   = renderChat;
+  window.loadMe       = loadMe;
+  window.applyTheme   = applyTheme;
+
+  // wire up the Account tab Upgrade button (RevenueCat in native, toast in browser)
+  const upgradeBtn = $('#upgradeBtn');
+  const premiumNote = $('#premiumNote');
+  if (upgradeBtn) {
+    if (state.me?.premium) {
+      upgradeBtn.textContent = 'Premium active';
+      upgradeBtn.disabled = true;
+      upgradeBtn.classList.remove('btn-accent');
+      upgradeBtn.classList.add('btn-outline');
+    } else {
+      upgradeBtn.addEventListener('click', async () => {
+        upgradeBtn.disabled = true;
+        upgradeBtn.textContent = 'Opening…';
+        try {
+          const mod = await import('./revenuecat.js').catch(() => null);
+          if (mod && typeof mod.presentPaywall === 'function') {
+            await mod.presentPaywall();
+            await loadMe();
+            if (state.me?.premium) {
+              upgradeBtn.textContent = 'Premium active';
+              upgradeBtn.classList.remove('btn-accent');
+              upgradeBtn.classList.add('btn-outline');
+              toast('Premium unlocked. Welcome.', 'ok');
+              return;
+            }
+            upgradeBtn.disabled = false;
+            upgradeBtn.textContent = 'Upgrade with Clerk';
+          } else {
+            // Native plugin not available — fall back to a friendly message.
+            if (premiumNote) premiumNote.style.display = 'block';
+            upgradeBtn.disabled = false;
+            upgradeBtn.textContent = 'Upgrade with Clerk';
+            toast('IAP only works in the native iOS/Android build.', 'info');
+          }
+        } catch (e) {
+          console.error(e);
+          upgradeBtn.disabled = false;
+          upgradeBtn.textContent = 'Upgrade with Clerk';
+          toast('Could not start purchase: ' + e.message, 'error');
+        }
+      });
+    }
+  }
+
+  import('./onboarding.js').then(m => m.maybeStart()).catch(err => {
+    console.warn('onboarding module failed to load:', err);
+  });
 })();

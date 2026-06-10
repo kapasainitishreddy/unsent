@@ -11,6 +11,14 @@ const patchSchema = z.object({
   onboarding_complete: z.boolean().optional(),
   default_avatar_id:   z.string().max(40).nullable().optional(),
   premium:             z.boolean().optional(),
+  aria_name:           z.string().min(1).max(24).optional(),
+  aria_mascot:         z.enum(['crane','moon','feather','leaf','wave','sprout']).optional(),
+  aria_voice:          z.string().nullable().optional(),
+  voice_pitch:         z.number().min(0.5).max(2).optional(),
+  voice_rate:          z.number().min(0.5).max(2).optional(),
+  user_display_name:   z.string().min(1).max(24).nullable().optional(),
+  onboarding_purpose:  z.enum(['releases','clarity','companion','health']).nullable().optional(),
+  onboarding_mood:     z.string().max(40).nullable().optional(),
 });
 
 export default async function (fastify) {

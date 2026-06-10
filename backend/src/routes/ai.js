@@ -17,26 +17,47 @@ const crisisCheckSchema = z.object({
 export default async function (fastify) {
   // POST /api/ai/companion — main chat endpoint
   fastify.post('/api/ai/companion', withBody(companionSchema, async (req, reply, d) => {
-    const apiKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY;
-    const baseUrl = process.env.OPENROUTER_API_KEY
-      ? 'https://openrouter.ai/api/v1'
-      : 'https://api.groq.com/openai/v1';
-    const model = process.env.UNSENT_MODEL || (
-      process.env.OPENROUTER_API_KEY
-        ? 'meta-llama/llama-3.3-70b-instruct:free'
-        : 'llama-3.1-8b-instant'
-    );
+    // Provider priority:
+    //   1. UNSENT_LLM_BASE / UNSENT_LLM_MODEL (explicit override)
+    //   2. NINE_ROUTER_URL (local 9router — free, 40+ providers, auto-fallback)
+    //   3. OPENROUTER_API_KEY (OpenRouter cloud)
+    //   4. GROQ_API_KEY (Groq cloud)
+    //   5. None of the above → mock
+    let apiKey, baseUrl, model, provider;
+    if (process.env.UNSENT_LLM_BASE) {
+      apiKey       = process.env.UNSENT_LLM_KEY || 'no-key-needed';
+      baseUrl      = process.env.UNSENT_LLM_BASE;
+      model        = process.env.UNSENT_LLM_MODEL || 'openai/gpt-4o-mini';
+      provider     = 'custom';
+    } else if (process.env.NINE_ROUTER_URL) {
+      apiKey       = process.env.NINE_ROUTER_KEY || 'no-key-needed';
+      baseUrl      = process.env.NINE_ROUTER_URL.replace(/\/+$/, '');
+      model        = process.env.NINE_ROUTER_MODEL || 'auto';
+      provider     = '9router';
+    } else if (process.env.OPENROUTER_API_KEY) {
+      apiKey       = process.env.OPENROUTER_API_KEY;
+      baseUrl      = 'https://openrouter.ai/api/v1';
+      model        = process.env.UNSENT_MODEL || 'meta-llama/llama-3.3-70b-instruct:free';
+      provider     = 'openrouter';
+    } else if (process.env.GROQ_API_KEY) {
+      apiKey       = process.env.GROQ_API_KEY;
+      baseUrl      = 'https://api.groq.com/openai/v1';
+      model        = 'llama-3.1-8b-instant';
+      provider     = 'groq';
+    } else {
+      apiKey = null;
+    }
 
     // Pull memory cues from the user's recent vents + unsent messages.
     // Capped at 3, role-based only, no journal/mood data.
     let memoryCues = [];
     try {
       const recentVents = db.all(
-        `SELECT title, body FROM vents WHERE user_id = ? ORDER BY created_at DESC LIMIT 12`,
+        `SELECT title, body FROM vent_rooms WHERE user_id = ? AND released = 0 ORDER BY created_at DESC LIMIT 12`,
         [req.userId]
       ) || [];
       const recentUnsent = db.all(
-        `SELECT body FROM unsent WHERE user_id = ? AND outcome != 'deleted' ORDER BY created_at DESC LIMIT 12`,
+        `SELECT body FROM unsent_messages WHERE user_id = ? AND outcome != 'deleted' ORDER BY created_at DESC LIMIT 12`,
         [req.userId]
       ) || [];
       memoryCues = extractMemoryCues([...recentVents, ...recentUnsent]);
@@ -51,6 +72,11 @@ export default async function (fastify) {
       model,
       baseUrl,
     });
+
+    if (result.kind === 'llm' || result.kind === 'fallback' || result.kind === 'error') {
+      result.provider = provider;
+      result.model = model;
+    }
 
     // If crisis, write a safety_flag (privacy-respecting: no full text, just hash)
     if (result.kind === 'crisis') {
@@ -89,14 +115,25 @@ export default async function (fastify) {
 
   // GET /api/ai/status — what AI is wired?
   fastify.get('/api/ai/status', async () => {
+    const provider =
+      process.env.UNSENT_LLM_BASE   ? 'custom'    :
+      process.env.NINE_ROUTER_URL   ? '9router'   :
+      process.env.OPENROUTER_API_KEY ? 'openrouter' :
+      process.env.GROQ_API_KEY      ? 'groq'      :
+      'mock';
+    const model = process.env.UNSENT_LLM_MODEL || process.env.NINE_ROUTER_MODEL || process.env.UNSENT_MODEL || (
+      provider === 'openrouter' ? 'meta-llama/llama-3.3-70b-instruct:free'
+      : provider === 'groq'     ? 'llama-3.1-8b-instant'
+      : provider === '9router'  ? 'auto'
+      : 'mock'
+    );
     return {
+      provider,
+      model,
       has_openrouter: !!process.env.OPENROUTER_API_KEY,
       has_groq: !!process.env.GROQ_API_KEY,
-      model: process.env.UNSENT_MODEL || (
-        process.env.OPENROUTER_API_KEY ? 'meta-llama/llama-3.3-70b-instruct:free'
-        : process.env.GROQ_API_KEY ? 'llama-3.1-8b-instant'
-        : 'mock'
-      ),
+      has_9router: !!process.env.NINE_ROUTER_URL,
+      has_custom: !!process.env.UNSENT_LLM_BASE,
       region: process.env.UNSENT_REGION || 'US',
     };
   });

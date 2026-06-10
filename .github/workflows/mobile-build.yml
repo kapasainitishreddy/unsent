@@ -1,0 +1,149 @@
+# Mobile build pipeline.
+#
+# Two separate jobs so the iOS one (which only ever runs on a Mac) doesn't
+# fail the Android one. Android is the primary target because it builds
+# natively on any platform (Linux, macOS, Windows-via-WSL). iOS requires
+# macOS + Xcode and is left as a manual workflow_dispatch job.
+#
+# Required secrets (configure in repo Settings -> Secrets -> Actions):
+#   - ANDROID_KEYSTORE_BASE64   base64-encoded .jks upload key
+#   - ANDROID_KEYSTORE_PASSWORD upload keystore password
+#   - ANDROID_KEY_ALIAS         upload key alias
+#   - ANDROID_KEY_PASSWORD      upload key password
+#   - APPLE_TEAM_ID             App Store Connect team id
+#   - APPLE_API_KEY_ID          App Store Connect API key id
+#   - APPLE_API_KEY_BASE64      base64-encoded .p8 API key
+#   - MATCH_PASSWORD            fastlane match passphrase
+#   - MATCH_GIT_URL             git url for the match repo
+#   - MATCH_DEPLOY_KEY          SSH key with read access to the match repo
+#
+# The Android job produces a signed .aab ready for Play Store upload.
+# The iOS job produces a signed .ipa ready for App Store / TestFlight.
+name: Mobile Build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+  pull_request:
+    paths:
+      - 'mobile/**'
+  workflow_dispatch:  # manual trigger
+
+jobs:
+  test:
+    name: Backend tests (every PR)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+        env:
+          CI: 'true'
+
+  android:
+    name: Android — assemble signed .aab
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install mobile dependencies
+        run: npm ci
+      - name: Sync Capacitor plugins
+        run: npx cap sync android
+      - name: Decode Android keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload-keystore.jks
+      - name: Build signed .aab (release)
+        env:
+          KEYSTORE_FILE: android/app/upload-keystore.jks
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          cd android
+          echo "storeFile=$KEYSTORE_FILE" >> ../keystore.properties
+          echo "storePassword=$KEYSTORE_PASSWORD" >> ../keystore.properties
+          echo "keyAlias=$KEY_ALIAS" >> ../keystore.properties
+          echo "keyPassword=$KEY_PASSWORD" >> ../keystore.properties
+          ./gradlew bundleRelease
+      - name: Upload .aab artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release.aab
+          path: mobile/android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 14
+
+  ios:
+    name: iOS — build signed .ipa (manual, macOS only)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: maxim-lobanov/setup-cocoapods@v1
+        with:
+          cocoapods-version: '1.15'
+      - name: Install mobile dependencies
+        run: npm ci
+      - name: Sync Capacitor plugins
+        run: npx cap sync ios
+      - name: Decode App Store Connect API key
+        env:
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+        run: |
+          mkdir -p ~/.appstoreconnect/private_keys
+          echo "$APPLE_API_KEY_BASE64" | base64 -d > ~/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+      - name: Install fastlane
+        run: |
+          gem install fastlane
+          fastlane install_plugins
+      - name: Build signed .ipa
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_DEPLOY_KEY: ${{ secrets.MATCH_DEPLOY_KEY }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          cd ios/App
+          mkdir -p ~/.ssh
+          echo "$MATCH_DEPLOY_KEY" > ~/.ssh/match_deploy_key
+          chmod 600 ~/.ssh/match_deploy_key
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/match_deploy_key" fastlane match appstore
+          fastlane build_app --scheme App
+      - name: Upload .ipa artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: App.ipa
+          path: mobile/ios/build/Build/Products/Release-iphoneos/App.ipa
+          retention-days: 14

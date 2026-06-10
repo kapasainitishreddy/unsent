@@ -35,6 +35,7 @@ import wipeRoute     from './routes/wipe.js';
 import aiRoute       from './routes/ai.js';
 import statsRoute    from './routes/stats.js';
 import metaRoute     from './routes/meta.js';
+import billingRoute  from './routes/billing.js';
 
 const PORT  = parseInt(process.env.PORT  || '4000', 10);
 const HOST  = process.env.HOST  || '127.0.0.1';
@@ -82,6 +83,7 @@ const ENDPOINTS = [
   'POST   /api/ai/crisis-check             (auth)',
   'GET    /api/ai/status',
   'GET    /api/meta',
+  'POST   /api/billing/webhook             (public — RevenueCat server-to-server)',
 ];
 
 /**
@@ -138,13 +140,14 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   fastify.addHook('preHandler', async (req, reply) => {
     const url = req.routeOptions?.url || req.url;
     if (!url.startsWith('/api/')) return;
-    if (url === '/api/health' || url === '/api/ai/status' || url === '/api/me' || url === '/api/meta') return;
+    if (url === '/api/health' || url === '/api/ai/status' || url === '/api/me' || url === '/api/meta' || url === '/api/billing/webhook') return;
     return requireAuth(req, reply);
   });
 
   for (const plugin of [
     vents, unsent, journal, mood, affirmations, intentions, coping,
     avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute, metaRoute,
+    billingRoute,
   ]) {
     await fastify.register(plugin);
   }
