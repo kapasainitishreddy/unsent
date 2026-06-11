@@ -85,7 +85,12 @@ function applyTheme(theme) {
   }
   // keep both toggles in sync (sidebar + onboarding overlay)
   const sb = document.getElementById('themeToggle');
-  if (sb) sb.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+  if (sb) {
+    const icon = document.getElementById('themeIcon');
+    const label = document.getElementById('themeLabel');
+    if (icon) icon.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+    if (label) label.textContent = html.dataset.theme === 'dark' ? 'Light' : 'Dark';
+  }
   const ob = document.getElementById('ob-theme');
   if (ob) ob.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
 }
@@ -162,6 +167,27 @@ async function loadMe() {
       $('#mood-save').disabled = false;
     });
   });
+
+  // Also let the user click anywhere on the mood card to select it (some users
+  // tap the emoji or text, not the cell border).
+  grid.addEventListener('click', e => {
+    const cell = e.target.closest('.mood-cell');
+    if (cell) cell.click();
+  });
+
+  // make the disabled save button look clickable + show a hint
+  const saveBtn = $('#mood-save');
+  if (saveBtn) {
+    const hint = document.createElement('div');
+    hint.className = 'save-hint';
+    hint.textContent = 'Pick a mood above to log it';
+    saveBtn.parentNode.insertBefore(hint, saveBtn);
+    const syncHint = () => { hint.style.display = saveBtn.disabled ? 'block' : 'none'; };
+    syncHint();
+    saveBtn.addEventListener('click', () => syncHint(), true);
+    // poll once a second — cheap, only runs while the mood tab is visible
+    setInterval(syncHint, 800);
+  }
 }
 
 async function loadCounts() {
@@ -578,63 +604,40 @@ $('#intention-save').addEventListener('click', async () => {
 // ---------------- avatar ----------------
 function renderAvatar() {
   const a = state.avatar || {};
-  const frame = $('#avatar-frame');
-  // Render a symbolic SVG avatar using the saved fields.
-  const skin = a.skin_tone || '#eac4a1';
-  const hair = a.hair_color || '#3a2a1a';
-  const glasses = a.glasses || 'none';
-  const expr = a.expression || 'calm';
-  const exprMap = {
-    calm: '·_·',
-    listening: '·◡·',
-    nodding: '·‿·',
-    soft_smile: '·‿·',
-    concerned: '·︵·',
-    breathing: '·~·',
-    heart: '·♥·',
-    release: '·◌·',
-  };
-  const eyes = exprMap[expr] || '·_·';
-  frame.innerHTML = `
-    <svg viewBox="0 0 200 200" width="100%" height="100%" style="border-radius:24px">
-      <defs>
-        <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#fbe9d2"/>
-          <stop offset="100%" stop-color="#e8c79e"/>
-        </linearGradient>
-      </defs>
-      <rect width="200" height="200" fill="url(#bg)"/>
-      <!-- hair back -->
-      <ellipse cx="100" cy="80" rx="58" ry="48" fill="${hair}"/>
-      <!-- face -->
-      <ellipse cx="100" cy="105" rx="48" ry="55" fill="${skin}"/>
-      <!-- hair front fringe -->
-      <path d="M52,82 Q60,55 100,50 Q140,55 148,82 Q140,68 100,68 Q60,68 52,82 Z" fill="${hair}"/>
-      <!-- eyes -->
-      <text x="78" y="115" font-family="Fraunces, serif" font-size="20" fill="#2a2620">${eyes.split('')[0] || '·'}</text>
-      <text x="110" y="115" font-family="Fraunces, serif" font-size="20" fill="#2a2620">${eyes.split('').slice(-1)[0] || '·'}</text>
-      <!-- mouth -->
-      <path d="M86,138 Q100,${expr === 'soft_smile' || expr === 'heart' ? '148' : '142'} 114,138" stroke="#2a2620" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      ${glasses === 'round' ? `
-        <circle cx="82" cy="112" r="13" fill="none" stroke="#2a2620" stroke-width="2"/>
-        <circle cx="118" cy="112" r="13" fill="none" stroke="#2a2620" stroke-width="2"/>
-        <line x1="95" y1="112" x2="105" y2="112" stroke="#2a2620" stroke-width="2"/>
-      ` : ''}
-      ${glasses === 'square' ? `
-        <rect x="68" y="100" width="28" height="22" rx="2" fill="none" stroke="#2a2620" stroke-width="2"/>
-        <rect x="104" y="100" width="28" height="22" rx="2" fill="none" stroke="#2a2620" stroke-width="2"/>
-        <line x1="96" y1="111" x2="104" y2="111" stroke="#2a2620" stroke-width="2"/>
-      ` : ''}
-      ${glasses === 'cateye' ? `
-        <path d="M68,110 Q82,98 96,110 Q82,118 68,110" fill="none" stroke="#2a2620" stroke-width="2"/>
-        <path d="M104,110 Q118,98 132,110 Q118,118 104,110" fill="none" stroke="#2a2620" stroke-width="2"/>
-      ` : ''}
-    </svg>
-  `;
+  // Don't replace the big SVG (#ariaSvg) — it already has the right paths.
+  // Just update its colors from the saved skin/hair/clothes, and toggle glasses
+  // visibility. The static SVG uses --aria-skin/--aria-hair/--aria-clothes vars.
+  const root = document.documentElement;
+  if (a.skin_tone)    root.style.setProperty('--aria-skin',    a.skin_tone);
+  if (a.hair_color)   root.style.setProperty('--aria-hair',    a.hair_color);
+  if (a.outfit)       root.style.setProperty('--aria-clothes', outfitColor(a.outfit));
+
+  const glassesGroup = document.getElementById('glassesGroup');
+  if (glassesGroup) {
+    glassesGroup.style.display = (a.glasses && a.glasses !== 'none') ? 'inline' : 'none';
+  }
+
+  // Expression → apply CSS class on the SVG to move eyes/mouth
+  const svg = document.getElementById('ariaSvg');
+  if (svg) {
+    svg.classList.remove('expr-calm','expr-listening','expr-nodding','expr-soft_smile','expr-concerned','expr-breathing','expr-heart','expr-release');
+    if (a.expression) svg.classList.add('expr-' + a.expression);
+  }
+
   renderSwatches('#opt-skin', state.skin, a.skin_tone, 'skin_tone', 'color');
   renderSwatches('#opt-hair', state.hair, a.hair_color, 'hair_color', 'color');
   renderSwatches('#opt-glasses', state.glasses, a.glasses, 'glasses', 'text');
   renderSwatches('#opt-expression', state.expressions, a.expression, 'expression', 'text');
+}
+
+function outfitColor(name) {
+  const map = {
+    soft_sweater: '#c2654a',
+    denim_jacket: '#5e7da3',
+    oversized_hoodie: '#9a8c7e',
+    linen_shirt: '#e8d5b5',
+  };
+  return map[name] || '#c2654a';
 }
 
 function renderSwatches(sel, options, current, field, kind) {
@@ -818,13 +821,13 @@ function attachMic(textarea, { append = false } = {}) {
   btn.className = 'mic-btn';
   btn.setAttribute('aria-label', 'Voice input');
   btn.innerHTML = `
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="9" y="3" width="6" height="12" rx="3"/>
       <path d="M5 11a7 7 0 0 0 14 0"/>
       <line x1="12" y1="18" x2="12" y2="22"/>
     </svg>
-    <span class="mic-label">Tap to talk</span>
   `;
+  btn.title = 'Tap to talk';
   wrapper.appendChild(btn);
 
   const liveRegion = document.createElement('div');

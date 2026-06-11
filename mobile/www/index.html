@@ -32,6 +32,11 @@
       --bad: #b91c1c;
       --crisis: #7c2d12;
       --aria-glow: #d97706;
+      --aria-skin: #fce8d8;
+      --aria-hair: #5b3a29;
+      --aria-clothes: #c2654a;
+      --aria-eyes: #2a2620;
+      --aria-blush: #f4a78d;
 
       --r-sm: 6px;
       --r-md: 10px;
@@ -65,6 +70,11 @@
       --bad: #ef4444;
       --crisis: #fca5a5;
       --aria-glow: #fbbf24;
+      --aria-skin: #fce8d8;
+      --aria-hair: #5b3a29;
+      --aria-clothes: #d68b6a;
+      --aria-eyes: #1a1714;
+      --aria-blush: #d97a5a;
 
       --shadow-1: 0 1px 2px rgba(0,0,0,.4), 0 1px 1px rgba(0,0,0,.3);
       --shadow-2: 0 4px 16px -4px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.4);
@@ -189,20 +199,21 @@
     .voice-wrap { position: relative; }
     .voice-wrap textarea { width: 100%; }
     .mic-btn {
-      position: absolute; right: 8px; bottom: 8px;
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 6px 12px; border-radius: 999px;
-      background: var(--accent-soft); color: var(--accent-deep);
-      border: 1px solid transparent;
-      font: 500 12px/1 var(--ui); cursor: pointer;
+      position: absolute; right: 6px; bottom: 6px;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg); color: var(--accent);
+      border: 1px solid var(--line);
+      cursor: pointer;
       transition: all 160ms ease;
+      box-shadow: var(--shadow-1);
     }
-    .mic-btn:hover { background: var(--accent); color: white; }
+    .mic-btn:hover { background: var(--accent-soft); color: var(--accent-deep); border-color: var(--accent); }
     .mic-btn.recording {
-      background: #e44; color: white;
+      background: #e44; color: white; border-color: #c33;
       animation: mic-pulse 1.2s infinite;
     }
-    .mic-btn.recording .mic-label::after { content: ' ●'; }
+    .mic-btn.recording::after { content: ''; position: absolute; top: 2px; right: 2px; width: 8px; height: 8px; border-radius: 50%; background: white; }
     .mic-live {
       position: absolute; left: 12px; bottom: 14px;
       font: italic 13px/1.4 'Fraunces', Georgia, serif;
@@ -279,6 +290,35 @@
       cursor: pointer; padding: 4px 6px; border-radius: 4px;
     }
     .grat-entry .delete-x:hover { color: var(--bad); background: var(--bg-soft); }
+
+    .save-hint {
+      font: italic 12px/1.2 'Fraunces', Georgia, serif;
+      color: var(--ink-faint);
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    /* dark mode toggle pill */
+    .theme-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      cursor: pointer;
+      font: 600 13px/1 var(--ui);
+      color: var(--ink);
+      transition: all 200ms ease;
+      user-select: none;
+      width: 100%;
+      justify-content: center;
+      margin-top: 4px;
+    }
+    .theme-pill:hover { border-color: var(--accent); color: var(--accent); }
+    .theme-pill-icon { font-size: 16px; line-height: 1; }
+    .theme-pill-label { letter-spacing: 0.04em; }
+    [data-theme="dark"] .theme-pill-icon { color: var(--aria-glow); }
+    [data-theme="light"] .theme-pill-icon { color: var(--accent); }
 
     .field + .field { margin-top: 14px; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -467,7 +507,7 @@
     .tts-btn.speaking { color: var(--accent); border-color: var(--accent-soft); }
 
     .aria-orb {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
       padding: 12px 16px; background: var(--card-2); border: 1px solid var(--line); border-radius: var(--r-md);
     }
     .aria-orb-icon { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, var(--accent) 0%, var(--aria-glow) 100%); display: flex; align-items: center; justify-content: center; }
@@ -475,7 +515,7 @@
     .aria-orb-name { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; }
     .aria-orb-status { font-size: 12px; color: var(--ink-faint); }
     .aria-orb-status .live { color: var(--good); font-weight: 600; }
-    .aria-orb-meta { margin-left: auto; font-size: 11px; color: var(--ink-faint); text-align: right; }
+    .aria-orb-meta { margin-left: auto; font-size: 11px; color: var(--ink-faint); text-align: right; flex-shrink: 0; }
 
     /* crisis banner */
     .crisis-banner {
@@ -701,17 +741,20 @@
 
       <div class="me-card" id="meCard">
         <div class="me-row">
-          <div class="me-name" id="meName">—</div>
-          <span class="tier-pill" id="meTier" style="display:none">free</span>
+          <span class="me-name" id="meName">—</span>
         </div>
         <div class="me-meta">
           <span class="dot" id="meDot"></span>
           <span id="meStatus">—</span>
         </div>
         <div class="btn-row" style="margin-top:4px">
-          <button class="btn btn-outline btn-sm" id="themeToggle" title="Toggle theme" style="flex:1">Theme</button>
           <button class="btn btn-ghost btn-sm" id="accountBtn" style="flex:1">Account</button>
         </div>
+      </div>
+
+      <div class="theme-pill" id="themeToggle" title="Toggle theme" role="button" tabindex="0">
+        <span class="theme-pill-icon" id="themeIcon">☾</span>
+        <span class="theme-pill-label" id="themeLabel">Dark</span>
       </div>
 
       <nav class="nav" id="nav">
@@ -999,7 +1042,7 @@
             <div class="aria-orb-name">Aria</div>
             <div class="aria-orb-status"><span class="live" id="ariaLive">●</span> <span id="ariaMood">here, listening</span></div>
           </div>
-          <div class="aria-orb-meta" id="ariaMeta">remembers nothing yet</div>
+          <div class="aria-orb-meta" id="ariaMeta">no memory yet</div>
         </div>
         <div id="crisis-container"></div>
         <div class="card">
@@ -1145,43 +1188,43 @@
               <svg viewBox="0 0 400 400" id="ariaSvg">
                 <g class="aria-head">
                   <!-- neck -->
-                  <rect x="170" y="290" width="60" height="60" fill="var(--skin)" rx="6"/>
+                  <rect x="170" y="290" width="60" height="60" fill="var(--aria-skin, #fce8d8)" rx="6"/>
                   <!-- shoulders / body -->
-                  <path d="M 80 400 Q 80 320 200 320 Q 320 320 320 400 Z" fill="var(--aria-clothes)"/>
+                  <path d="M 80 400 Q 80 320 200 320 Q 320 320 320 400 Z" fill="var(--aria-clothes, #c2654a)"/>
                   <!-- head -->
-                  <ellipse cx="200" cy="200" rx="110" ry="125" fill="var(--skin)"/>
+                  <ellipse cx="200" cy="200" rx="110" ry="125" fill="var(--aria-skin, #fce8d8)"/>
                   <!-- hair back -->
-                  <path d="M 90 180 Q 90 70 200 70 Q 310 70 310 180 L 310 270 Q 280 250 200 250 Q 120 250 90 270 Z" fill="var(--hair)"/>
+                  <path d="M 90 180 Q 90 70 200 70 Q 310 70 310 180 L 310 270 Q 280 250 200 250 Q 120 250 90 270 Z" fill="var(--aria-hair, #5b3a29)"/>
                   <!-- hair fringe -->
-                  <path d="M 100 150 Q 130 80 200 90 Q 270 80 300 150 Q 280 130 240 145 Q 200 110 160 145 Q 120 130 100 150 Z" fill="var(--hair)"/>
+                  <path d="M 100 150 Q 130 80 200 90 Q 270 80 300 150 Q 280 130 240 145 Q 200 110 160 145 Q 120 130 100 150 Z" fill="var(--aria-hair, #5b3a29)"/>
                   <!-- ears -->
-                  <ellipse cx="92" cy="210" rx="14" ry="22" fill="var(--skin)"/>
-                  <ellipse cx="308" cy="210" rx="14" ry="22" fill="var(--skin)"/>
+                  <ellipse cx="92" cy="210" rx="14" ry="22" fill="var(--aria-skin, #fce8d8)"/>
+                  <ellipse cx="308" cy="210" rx="14" ry="22" fill="var(--aria-skin, #fce8d8)"/>
                   <!-- eyes -->
                   <g class="aria-eyes">
-                    <ellipse cx="160" cy="200" rx="10" ry="12" fill="var(--ink)"/>
-                    <ellipse cx="240" cy="200" rx="10" ry="12" fill="var(--ink)"/>
+                    <ellipse cx="160" cy="200" rx="10" ry="12" fill="var(--aria-eyes, #2a2620)"/>
+                    <ellipse cx="240" cy="200" rx="10" ry="12" fill="var(--aria-eyes, #2a2620)"/>
                     <circle cx="163" cy="197" r="3" fill="white"/>
                     <circle cx="243" cy="197" r="3" fill="white"/>
                   </g>
                   <!-- brows -->
-                  <path d="M 145 178 Q 160 172 178 178" stroke="var(--hair)" stroke-width="3" fill="none" stroke-linecap="round"/>
-                  <path d="M 222 178 Q 240 172 255 178" stroke="var(--hair)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  <path d="M 145 178 Q 160 172 178 178" stroke="var(--aria-hair, #5b3a29)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                  <path d="M 222 178 Q 240 172 255 178" stroke="var(--aria-hair, #5b3a29)" stroke-width="3" fill="none" stroke-linecap="round"/>
                   <!-- nose -->
-                  <path d="M 200 215 L 195 240 Q 200 245 205 240 Z" fill="var(--skin-shadow)" opacity="0.5"/>
+                  <path d="M 200 215 L 195 240 Q 200 245 205 240 Z" fill="var(--aria-skin, #fce8d8)" opacity="0.5"/>
                   <!-- mouth -->
                   <g class="aria-mouth">
-                    <path d="M 175 268 Q 200 280 225 268" stroke="var(--ink)" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <path d="M 175 268 Q 200 280 225 268" stroke="var(--aria-eyes, #2a2620)" stroke-width="3" fill="none" stroke-linecap="round"/>
                   </g>
                   <!-- glasses (conditional) -->
-                  <g id="glassesGroup">
-                    <circle cx="160" cy="200" r="28" fill="none" stroke="var(--glasses)" stroke-width="3"/>
-                    <circle cx="240" cy="200" r="28" fill="none" stroke="var(--glasses)" stroke-width="3"/>
-                    <line x1="188" y1="200" x2="212" y2="200" stroke="var(--glasses)" stroke-width="3"/>
+                  <g id="glassesGroup" style="display:none">
+                    <circle cx="160" cy="200" r="28" fill="none" stroke="var(--ink, #2a2620)" stroke-width="3"/>
+                    <circle cx="240" cy="200" r="28" fill="none" stroke="var(--ink, #2a2620)" stroke-width="3"/>
+                    <line x1="188" y1="200" x2="212" y2="200" stroke="var(--ink, #2a2620)" stroke-width="3"/>
                   </g>
                   <!-- cheek blush -->
-                  <ellipse cx="140" cy="240" rx="18" ry="10" fill="var(--accent-soft)" opacity="0.5"/>
-                  <ellipse cx="260" cy="240" rx="18" ry="10" fill="var(--accent-soft)" opacity="0.5"/>
+                  <ellipse cx="140" cy="240" rx="18" ry="10" fill="var(--aria-blush, #f4a78d)" opacity="0.5"/>
+                  <ellipse cx="260" cy="240" rx="18" ry="10" fill="var(--aria-blush, #f4a78d)" opacity="0.5"/>
                 </g>
               </svg>
             </div>
