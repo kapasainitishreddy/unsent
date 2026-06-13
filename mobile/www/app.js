@@ -9,13 +9,16 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 // ---------------- theme ----------------
 const THEME_KEY = 'unsent_theme';
+// Themes cycle in this order when the toggle is tapped.
+const THEME_CYCLE = ['light', 'dark', 'calm'];
 function initTheme() {
   let saved = localStorage.getItem(THEME_KEY);
   if (!saved) saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   applyTheme(saved);
   const btn = $('#themeToggle');
   if (btn) btn.addEventListener('click', () => {
-    const next = (document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark';
+    const cur = document.documentElement.dataset.theme || 'light';
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length];
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
   });
@@ -83,16 +86,25 @@ function applyTheme(theme) {
   } else {
     html.dataset.theme = theme || 'light';
   }
+  // The toggle previews the theme you'd switch TO next in the cycle.
+  const cur = html.dataset.theme || 'light';
+  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length] || 'dark';
+  const META = {
+    light: { icon: '☀', label: 'Light' },
+    dark:  { icon: '☾', label: 'Dark' },
+    calm:  { icon: '❀', label: 'Calm' },
+  };
+  const nextMeta = META[next] || META.dark;
   // keep both toggles in sync (sidebar + onboarding overlay)
   const sb = document.getElementById('themeToggle');
   if (sb) {
     const icon = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
-    if (icon) icon.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
-    if (label) label.textContent = html.dataset.theme === 'dark' ? 'Light' : 'Dark';
+    if (icon) icon.textContent = nextMeta.icon;
+    if (label) label.textContent = nextMeta.label;
   }
   const ob = document.getElementById('ob-theme');
-  if (ob) ob.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+  if (ob) ob.textContent = nextMeta.icon;
 }
 
 function when(iso) {
@@ -118,6 +130,8 @@ $$('.nav-item').forEach(el => {
     if (target === 'avatar') renderAvatar();
     if (target === 'account') import('./aria.js').then(m => m.init()).catch(err => console.warn(err));
     if (target === 'gratitude') import('./gratitude.js').then(m => m.init()).catch(err => console.warn(err));
+    if (target === 'healing') import('./heartbreak.js').then(m => m.init()).catch(err => console.warn(err));
+    if (target === 'calm') import('./calm.js').then(m => m.init()).catch(err => console.warn(err));
   });
 });
 
@@ -190,6 +204,56 @@ async function loadMe() {
   }
 }
 
+// Curated chibi mascots — a softer one for a fresh start, brighter as the
+// streak grows. Picks by streak length, capped at the last one.
+const STREAK_MASCOTS = ['c2', 'c8', 'c1', 'c4', 'c3', 'c5', 'c7', 'c6'];
+function streakHead(s) {
+  if (s.current === 0) return 'A fresh page';
+  if (s.current === 1) return 'Day one, kept';
+  return `${s.current} days, unbroken`;
+}
+function streakSub(s) {
+  if (s.current === 0) return s.total_active_days
+    ? 'Come back today and the thread picks up again.'
+    : 'Write one true thing and it begins.';
+  if (s.current === 1) return 'You showed up — that’s the whole thing.';
+  if (s.current < 4)  return 'A rhythm is forming. Keep pulling the thread.';
+  if (s.current < 7)  return 'Steady. You keep coming home to yourself.';
+  if (s.current < 14) return 'A full week, held together.';
+  if (s.current < 30) return 'Weeks of tending your own heart.';
+  return 'This is just who you are now.';
+}
+function renderStreak(s) {
+  const el = $('#streak-banner');
+  if (!el) return;
+  const pic = STREAK_MASCOTS[Math.min(s.current, STREAK_MASCOTS.length - 1)];
+  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const now = new Date();
+  const thread = (s.week || []).map(w => {
+    const d = new Date(now); d.setDate(now.getDate() - w.offset);
+    const today = w.offset === 0;
+    return `<div class="thread-day${today ? ' today' : ''}">
+      <span class="thread-node${w.active ? ' on' : ''}"></span>
+      <span class="thread-label">${labels[d.getDay()]}</span></div>`;
+  }).join('');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-label', `${s.current}-day streak. Longest run ${s.longest}. ${s.total_active_days} days here in total.`);
+  el.innerHTML = `
+    <img class="streak-mascot" src="assets/chibi/${pic}.png" alt="" width="54" height="54" decoding="async" draggable="false" />
+    <div class="streak-body">
+      <div class="streak-eyebrow">you keep showing up</div>
+      <div class="streak-head">${streakHead(s)}</div>
+      <div class="streak-sub">${streakSub(s)}</div>
+    </div>
+    <div class="streak-aside"><b>${s.longest}</b>longest run<br>${s.total_active_days} day${s.total_active_days === 1 ? '' : 's'} here</div>
+    <div class="streak-thread">${thread}</div>`;
+  el.hidden = false;
+}
+async function loadStreak() {
+  try { renderStreak(await api('/api/streak')); }
+  catch (e) { console.warn('streak load failed', e); }
+}
+
 async function loadCounts() {
   const [v, u, j, m] = await Promise.all([
     api('/api/vents?limit=1'),
@@ -197,6 +261,7 @@ async function loadCounts() {
     api('/api/journal?limit=1'),
     api('/api/mood?limit=1'),
   ]);
+  loadStreak();
   $('#badge-vents').textContent = v.total ?? 0;
   $('#badge-unsent').textContent = u.total ?? 0;
   $('#badge-journal').textContent = j.total ?? 0;

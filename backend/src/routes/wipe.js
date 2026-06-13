@@ -10,7 +10,7 @@ export default async function (fastify) {
     }
     logDelete(db, { userId: req.userId, what: 'all', how: 'wipe_all' });
 
-    const tables = ['vent_rooms','unsent_messages','journal_entries','mood_checkins','affirmations','intentions','coping_sessions','safety_flags'];
+    const tables = ['vent_rooms','unsent_messages','journal_entries','mood_checkins','affirmations','intentions','coping_sessions','safety_flags','gratitude_entries','no_contact','heartbreak_items','timed_letters'];
     for (const t of tables) db.run(`DELETE FROM ${t} WHERE user_id = ?`, [req.userId]);
 
     // Reset settings to defaults, but keep the user_id and the wipe log

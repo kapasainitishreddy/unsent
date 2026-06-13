@@ -14,6 +14,10 @@ export default async function (fastify) {
       affirmations:db.all(`SELECT * FROM affirmations WHERE user_id = ?`, [req.userId]),
       intentions:  db.all(`SELECT * FROM intentions WHERE user_id = ?`, [req.userId]),
       coping:      db.all(`SELECT * FROM coping_sessions WHERE user_id = ?`, [req.userId]),
+      gratitude:   db.all(`SELECT * FROM gratitude_entries WHERE user_id = ?`, [req.userId]),
+      no_contact:  db.get(`SELECT * FROM no_contact WHERE user_id = ?`, [req.userId]),
+      heartbreak_items: db.all(`SELECT * FROM heartbreak_items WHERE user_id = ?`, [req.userId]),
+      timed_letters:    db.all(`SELECT * FROM timed_letters WHERE user_id = ?`, [req.userId]),
       avatar:      db.get(`SELECT * FROM avatar_settings WHERE user_id = ?`, [req.userId]),
     };
     // strip pin hash from the export

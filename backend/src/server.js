@@ -8,6 +8,7 @@
 //     logs a loud warning on boot so this is impossible to ship by accident.
 
 process.removeAllListeners('warning');  // silence the node:sqlite experimental warning
+import { pathToFileURL } from 'node:url';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -37,6 +38,7 @@ import statsRoute    from './routes/stats.js';
 import metaRoute     from './routes/meta.js';
 import billingRoute  from './routes/billing.js';
 import gratitudeRoute from './routes/gratitude.js';
+import heartbreakRoute from './routes/heartbreak.js';
 
 const PORT  = parseInt(process.env.PORT  || '4000', 10);
 const HOST  = process.env.HOST  || '127.0.0.1';
@@ -152,7 +154,7 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   for (const plugin of [
     vents, unsent, journal, mood, affirmations, intentions, coping,
     avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute, metaRoute,
-    billingRoute, gratitudeRoute,
+    billingRoute, gratitudeRoute, heartbreakRoute,
   ]) {
     await fastify.register(plugin);
   }
@@ -167,7 +169,10 @@ export async function build({ dbPath = DB, logger = false } = {}) {
 }
 
 // Run only when this file is the entrypoint, not when it's imported by tests.
-const isMain = import.meta.url === `file:///${process.argv[1].replace(/\\/g, '/')}`;
+// pathToFileURL handles platform path differences (Linux/macOS leading slash,
+// Windows drive letters) — building the URL string by hand broke startup on
+// POSIX, where file:///${'/home/...'} yields four slashes and never matches.
+const isMain = import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   const fastify = await build();
   if (!isAuthEnabled()) {

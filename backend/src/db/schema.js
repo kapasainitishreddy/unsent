@@ -215,6 +215,64 @@ CREATE TABLE IF NOT EXISTS deleted_log (
 );
 
 -- ============================================================
+-- 12. no_contact — "days since last contact" streak (one active per user).
+--     Doubles as the recovery day-0 anchor for the breakup roadmap.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS no_contact (
+  user_id            TEXT PRIMARY KEY,
+  label              TEXT,                              -- who/what, optional ("them")
+  started_at         INTEGER NOT NULL,                  -- current streak start
+  last_reset_at      INTEGER,                           -- last relapse, null if never
+  reset_count        INTEGER NOT NULL DEFAULT 0,        -- how many times restarted
+  longest_streak_ms  INTEGER NOT NULL DEFAULT 0,        -- best run so far
+  active             INTEGER NOT NULL DEFAULT 1,        -- 0 = stopped tracking
+  created_at         INTEGER NOT NULL,
+  updated_at         INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES settings(user_id) ON DELETE CASCADE
+);
+
+-- ============================================================
+-- 13. heartbreak_items — generic list items for the breakup toolkit.
+--     kind: 'reason'   — why it ended (anti-idealization)
+--           'trigger'  — song/place/date + coping plan
+--           'standard' — boundary / non-negotiable for next time
+--           'glowup'   — self-reinvestment goal
+--           'memory'   — closure-ritual keepsake (can be 'sealed')
+-- ============================================================
+CREATE TABLE IF NOT EXISTS heartbreak_items (
+  id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL,
+  kind            TEXT NOT NULL,
+  title           TEXT,
+  body            TEXT NOT NULL,
+  plan            TEXT,                                 -- coping plan (triggers) / progress note (glowup)
+  image_data_url  TEXT,                                 -- memory keepsake (base64; small)
+  sealed          INTEGER NOT NULL DEFAULT 0,           -- memory box: sealed away
+  done            INTEGER NOT NULL DEFAULT 0,           -- glowup goal completed
+  active          INTEGER NOT NULL DEFAULT 1,           -- soft-delete
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES settings(user_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_hb_user_kind ON heartbreak_items(user_id, kind, created_at DESC);
+
+-- ============================================================
+-- 14. timed_letters — letters to your future self, delivered later.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS timed_letters (
+  id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL,
+  title           TEXT,
+  body            TEXT NOT NULL,
+  deliver_at      INTEGER NOT NULL,                     -- ms; resurfaces on/after this
+  delivered_at    INTEGER,                              -- ms when the user opened it
+  created_at      INTEGER NOT NULL,
+  updated_at      INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES settings(user_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_letters_user_deliver ON timed_letters(user_id, deliver_at);
+
+-- ============================================================
 -- Convenience views
 -- ============================================================
 CREATE VIEW IF NOT EXISTS v_mood_week AS
