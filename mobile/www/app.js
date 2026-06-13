@@ -132,6 +132,7 @@ $$('.nav-item').forEach(el => {
     if (target === 'gratitude') import('./gratitude.js').then(m => m.init()).catch(err => console.warn(err));
     if (target === 'healing') import('./heartbreak.js').then(m => m.init()).catch(err => console.warn(err));
     if (target === 'calm') import('./calm.js').then(m => m.init()).catch(err => console.warn(err));
+    if (target === 'game') import('./chibigame.js').then(m => m.init()).catch(err => console.warn(err));
   });
 });
 
