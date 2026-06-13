@@ -12,6 +12,7 @@
   <style>
     /* ============== design tokens (light default) ============== */
     :root {
+      color-scheme: light;
       --bg: #faf7f2;
       --bg-soft: #f3eee5;
       --bg-deep: #ebe3d2;
@@ -50,6 +51,7 @@
 
     /* ============== dark theme ============== */
     [data-theme="dark"] {
+      color-scheme: dark;
       --bg: #161311;
       --bg-soft: #1f1b18;
       --bg-deep: #100e0c;
@@ -85,6 +87,7 @@
     /* Soft, low-contrast sage + mist palette. Muted alerts so nothing on
        screen feels alarming — built for moments when you're already raw. */
     [data-theme="calm"] {
+      color-scheme: light;
       --bg: #eef3f1;
       --bg-soft: #e4ece9;
       --bg-deep: #d8e2dd;
@@ -863,27 +866,38 @@
     .breath-sub { font-size: 12px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .06em; margin: 6px 0 14px; }
     @media (max-width: 560px) { .scene-row, .chakra-wrap { grid-template-columns: 1fr; } }
 
-    /* ============== Streak hero ============== */
-    .streak-card { display: flex; align-items: center; gap: 16px; padding: 16px 18px; margin-bottom: 20px;
-      border-radius: 18px; border: 1px solid var(--accent-soft);
-      background: linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 70%);
+    /* ============== Streak — "the thread" ============== */
+    /* Signature: a thread of days you've kept, with your companion keeping
+       pace at today's end. Not a number to beat — a line you're holding. */
+    .streak-card { display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+      gap: 4px 16px; padding: 15px 18px 13px; margin-bottom: 22px;
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg);
       box-shadow: var(--shadow-1); animation: fadein .3s ease; }
-    .streak-mascot { width: 64px; height: 64px; flex: 0 0 auto; border-radius: 16px; object-fit: cover;
-      background: var(--card); box-shadow: 0 4px 14px -6px var(--accent); animation: streak-bob 3.4s ease-in-out infinite; }
-    @keyframes streak-bob { 0%,100% { transform: translateY(0) rotate(-1.5deg); } 50% { transform: translateY(-4px) rotate(1.5deg); } }
-    .streak-body { flex: 1 1 auto; min-width: 0; }
-    .streak-count { display: flex; align-items: baseline; gap: 7px; }
-    .streak-num { font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 600; color: var(--accent-deep); line-height: 1; }
-    .streak-unit { font-size: 14px; color: var(--ink-soft); }
-    .streak-msg { font-size: 13px; color: var(--ink-soft); margin-top: 3px; }
-    .streak-meta { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
-    .streak-dots { display: flex; gap: 7px; flex: 0 0 auto; }
-    .streak-day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
-    .streak-dot { width: 13px; height: 13px; border-radius: 50%; background: var(--bg-deep); border: 1px solid var(--line); }
-    .streak-dot.on { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 8px -1px var(--accent); }
-    .streak-dot.today { outline: 2px solid var(--accent-soft); outline-offset: 2px; }
-    .streak-dlabel { font-size: 9px; color: var(--ink-faint); text-transform: uppercase; }
-    @media (max-width: 560px) { .streak-dots { display: none; } }
+    .streak-mascot { grid-row: 1 / 3; align-self: center; width: 54px; height: 54px;
+      border-radius: 14px; object-fit: cover; background: var(--card-2); }
+    .streak-body { min-width: 0; }
+    .streak-eyebrow { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+    .streak-head { font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 20px; line-height: 1.15; color: var(--ink);
+      text-wrap: balance; font-variant-numeric: tabular-nums; }
+    .streak-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+    .streak-aside { text-align: right; font-size: 11px; color: var(--ink-faint); line-height: 1.5; white-space: nowrap; }
+    .streak-aside b { display: block; font-family: 'Fraunces', Georgia, serif; font-size: 17px; font-weight: 600; color: var(--ink-soft);
+      font-variant-numeric: tabular-nums; }
+    .streak-thread { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: flex-start;
+      margin-top: 13px; position: relative; }
+    .streak-thread::before { content: ''; position: absolute; left: 8px; right: 8px; top: 7px; height: 2px;
+      background: var(--line); border-radius: 2px; }
+    .thread-day { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; flex: 1; }
+    .thread-node { width: 14px; height: 14px; border-radius: 50%; box-sizing: border-box;
+      background: var(--bg-deep); border: 2px solid var(--line); transition: background .3s ease; }
+    .thread-node.on { background: var(--accent); border-color: var(--accent); }
+    .thread-day.today .thread-node { width: 16px; height: 16px; box-shadow: 0 0 0 4px var(--accent-soft); }
+    .thread-day.today .thread-node.on { animation: thread-pulse 2.6s ease-in-out infinite; }
+    @keyframes thread-pulse { 0%,100% { box-shadow: 0 0 0 4px var(--accent-soft); } 50% { box-shadow: 0 0 0 7px var(--accent-soft); } }
+    .thread-label { font-size: 9px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
+    .thread-day.today .thread-label { color: var(--accent); font-weight: 600; }
+    @media (prefers-reduced-motion: reduce) { .streak-card, .thread-node { animation: none !important; } }
+    @media (max-width: 560px) { .streak-aside { display: none; } }
   </style>
 </head>
 <body>

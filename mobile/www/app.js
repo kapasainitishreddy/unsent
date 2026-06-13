@@ -207,16 +207,21 @@ async function loadMe() {
 // Curated chibi mascots — a softer one for a fresh start, brighter as the
 // streak grows. Picks by streak length, capped at the last one.
 const STREAK_MASCOTS = ['c2', 'c8', 'c1', 'c4', 'c3', 'c5', 'c7', 'c6'];
-function streakMsg(s) {
+function streakHead(s) {
+  if (s.current === 0) return 'A fresh page';
+  if (s.current === 1) return 'Day one, kept';
+  return `${s.current} days, unbroken`;
+}
+function streakSub(s) {
   if (s.current === 0) return s.total_active_days
-    ? 'A fresh start — show up for yourself today. 🤍'
-    : 'Your first day starts whenever you\'re ready. 🤍';
-  if (s.current === 1) return 'Day one. You showed up — that\'s the hard part.';
-  if (s.current < 4)  return 'Building something gentle. Keep going. 🌱';
-  if (s.current < 7)  return 'A rhythm is forming. Look at you.';
-  if (s.current < 14) return 'A whole week of showing up for yourself.';
-  if (s.current < 30) return 'Weeks of tending to your own heart. 🌿';
-  return 'This is who you are now: someone who keeps showing up.';
+    ? 'Come back today and the thread picks up again.'
+    : 'Write one true thing and it begins.';
+  if (s.current === 1) return 'You showed up — that’s the whole thing.';
+  if (s.current < 4)  return 'A rhythm is forming. Keep pulling the thread.';
+  if (s.current < 7)  return 'Steady. You keep coming home to yourself.';
+  if (s.current < 14) return 'A full week, held together.';
+  if (s.current < 30) return 'Weeks of tending your own heart.';
+  return 'This is just who you are now.';
 }
 function renderStreak(s) {
   const el = $('#streak-banner');
@@ -224,19 +229,24 @@ function renderStreak(s) {
   const pic = STREAK_MASCOTS[Math.min(s.current, STREAK_MASCOTS.length - 1)];
   const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
   const now = new Date();
-  const dots = (s.week || []).map(w => {
+  const thread = (s.week || []).map(w => {
     const d = new Date(now); d.setDate(now.getDate() - w.offset);
-    const cls = 'streak-dot' + (w.active ? ' on' : '') + (w.offset === 0 ? ' today' : '');
-    return `<div class="streak-day"><span class="${cls}"></span><span class="streak-dlabel">${labels[d.getDay()]}</span></div>`;
+    const today = w.offset === 0;
+    return `<div class="thread-day${today ? ' today' : ''}">
+      <span class="thread-node${w.active ? ' on' : ''}"></span>
+      <span class="thread-label">${labels[d.getDay()]}</span></div>`;
   }).join('');
+  el.setAttribute('role', 'status');
+  el.setAttribute('aria-label', `${s.current}-day streak. Longest run ${s.longest}. ${s.total_active_days} days here in total.`);
   el.innerHTML = `
-    <img class="streak-mascot" src="assets/chibi/${pic}.png" alt="" draggable="false" />
+    <img class="streak-mascot" src="assets/chibi/${pic}.png" alt="" width="54" height="54" decoding="async" draggable="false" />
     <div class="streak-body">
-      <div class="streak-count"><span class="streak-num">${s.current}</span><span class="streak-unit">day${s.current === 1 ? '' : 's'} in a row</span></div>
-      <div class="streak-msg">${streakMsg(s)}</div>
-      <div class="streak-meta">longest ${s.longest} · ${s.total_active_days} day${s.total_active_days === 1 ? '' : 's'} here</div>
+      <div class="streak-eyebrow">you keep showing up</div>
+      <div class="streak-head">${streakHead(s)}</div>
+      <div class="streak-sub">${streakSub(s)}</div>
     </div>
-    <div class="streak-dots">${dots}</div>`;
+    <div class="streak-aside"><b>${s.longest}</b>longest run<br>${s.total_active_days} day${s.total_active_days === 1 ? '' : 's'} here</div>
+    <div class="streak-thread">${thread}</div>`;
   el.hidden = false;
 }
 async function loadStreak() {
