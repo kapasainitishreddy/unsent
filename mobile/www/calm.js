@@ -180,20 +180,65 @@ const BREATH = [
 let breathing = false, breathPhase = 0, breathCycles = 0, breathTimer = null;
 
 function chibiSvg(mood = 'calm') {
-  // mood: 'calm' | 'happy' | 'bliss'
-  const eyes = mood === 'bliss'
-    ? '<path d="M20 30 q5 -4 10 0" /><path d="M40 30 q5 -4 10 0" />'   // closed, content
-    : '<circle cx="25" cy="30" r="3.2" fill="#3a2f28"/><circle cx="45" cy="30" r="3.2" fill="#3a2f28"/>';
-  const mouth = mood === 'happy' || mood === 'bliss'
-    ? '<path d="M28 40 q7 8 14 0" stroke="#3a2f28" stroke-width="2.5" fill="none" stroke-linecap="round"/>'
-    : '<path d="M30 41 q5 3 10 0" stroke="#3a2f28" stroke-width="2.5" fill="none" stroke-linecap="round"/>';
-  return `<svg viewBox="0 0 70 70" class="chibi-svg" aria-hidden="true">
-    <ellipse cx="35" cy="64" rx="18" ry="3" fill="#000" opacity="0.08"/>
-    <circle cx="35" cy="34" r="26" fill="var(--aria-skin,#fce8d8)"/>
-    <path d="M12 30 q4 -20 23 -22 q19 2 23 22 q-8 -8 -23 -8 q-15 0 -23 8z" fill="var(--aria-hair,#5b3a29)"/>
-    <circle cx="19" cy="40" r="4" fill="var(--aria-blush,#f4a78d)" opacity="0.55"/>
-    <circle cx="51" cy="40" r="4" fill="var(--aria-blush,#f4a78d)" opacity="0.55"/>
-    <g stroke="#3a2f28" fill="#3a2f28">${eyes}</g>${mouth}
+  // mood: 'calm' | 'happy' | 'bliss'. A manhwa-style chibi in a grey cat
+  // hoodie with big teal eyes — drawn in SVG so it animates instantly and
+  // stays symbolic (no realistic photos).
+  const OUT = '#4a3a2e', HAIR = '#7a4f33', HAIRH = '#a9794f', BLUSH = '#f4a0a0', HOODIN = '#f3aebf';
+  let eyes, mouth;
+  if (mood === 'bliss') {
+    eyes = '<path d="M40 88 q12 -15 24 0" stroke="#2a211c" stroke-width="4.5" fill="none" stroke-linecap="round"/>'
+         + '<path d="M78 88 q12 -15 24 0" stroke="#2a211c" stroke-width="4.5" fill="none" stroke-linecap="round"/>';
+    mouth = '<ellipse cx="71" cy="106" rx="6" ry="5" fill="#c65b48"/><path d="M65 104 q6 7 12 0" fill="#ef9d84"/>';
+  } else {
+    const eye = (cx) =>
+      `<ellipse cx="${cx}" cy="90" rx="14" ry="18" fill="#fff" stroke="${OUT}" stroke-width="1.2"/>
+       <ellipse cx="${cx}" cy="92" rx="12.5" ry="16" fill="url(#ci_iris)"/>
+       <ellipse cx="${cx}" cy="98" rx="9" ry="11" fill="url(#ci_irisd)" opacity="0.7"/>
+       <circle cx="${cx}" cy="93" r="5.5" fill="#15302c"/>
+       <circle cx="${cx - 5}" cy="84" r="5" fill="#fff"/>
+       <circle cx="${cx + 5}" cy="98" r="3" fill="#fff" opacity="0.9"/>
+       <circle cx="${cx - 6}" cy="95" r="1.6" fill="#cffaf2" opacity="0.9"/>
+       <path d="M${cx - 16} 75 q16 -10 32 0" stroke="#2a211c" stroke-width="5" fill="none" stroke-linecap="round"/>`;
+    eyes = eye(50) + eye(92);
+    mouth = mood === 'calm'
+      ? '<path d="M65 107 q6 5 12 0" stroke="#b15b48" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      : '<path d="M62 104 q9 10 18 0 q-9 4 -18 0z" fill="#c65b48"/><path d="M64 105 q7 3 14 0" fill="#ef9d84"/>';
+  }
+  return `<svg viewBox="0 0 144 176" class="chibi-svg" aria-hidden="true">
+    <defs>
+      <radialGradient id="ci_iris" cx="50%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#aef0e4"/><stop offset="50%" stop-color="#3fb9a5"/><stop offset="100%" stop-color="#1f7d6e"/></radialGradient>
+      <radialGradient id="ci_irisd" cx="50%" cy="80%" r="70%">
+        <stop offset="0%" stop-color="#1f7d6e"/><stop offset="100%" stop-color="#11514a"/></radialGradient>
+      <linearGradient id="ci_hair" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${HAIRH}"/><stop offset="100%" stop-color="${HAIR}"/></linearGradient>
+      <linearGradient id="ci_hood" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#d3d7de"/><stop offset="100%" stop-color="#c2c7cf"/></linearGradient>
+    </defs>
+    <ellipse cx="72" cy="168" rx="36" ry="5" fill="#000" opacity="0.08"/>
+    <path d="M44 162 q-4 -34 28 -34 q32 0 28 34 z" fill="url(#ci_hood)" stroke="${OUT}" stroke-width="1.3"/>
+    <ellipse cx="56" cy="150" rx="6" ry="7" fill="#fff" opacity="0.8"/><ellipse cx="88" cy="150" rx="6" ry="7" fill="#fff" opacity="0.8"/>
+    <path d="M26 44 L20 12 L52 34 Z" fill="url(#ci_hood)" stroke="${OUT}" stroke-width="1.3"/>
+    <path d="M30 38 L26 20 L44 33 Z" fill="${HOODIN}"/>
+    <path d="M118 44 L124 12 L92 34 Z" fill="url(#ci_hood)" stroke="${OUT}" stroke-width="1.3"/>
+    <path d="M114 38 L118 20 L100 33 Z" fill="${HOODIN}"/>
+    <ellipse cx="72" cy="82" rx="64" ry="62" fill="url(#ci_hood)" stroke="${OUT}" stroke-width="1.4"/>
+    <ellipse cx="72" cy="40" rx="15" ry="11" fill="#fff"/>
+    <circle cx="66" cy="39" r="1.8" fill="#3a2f28"/><circle cx="78" cy="39" r="1.8" fill="#3a2f28"/>
+    <path d="M70 43 q2 2 4 0" stroke="#d98fa3" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M16 84 Q10 130 30 150 Q26 110 30 86 Z" fill="url(#ci_hair)"/>
+    <path d="M128 84 Q134 130 114 150 Q118 110 114 86 Z" fill="url(#ci_hair)"/>
+    <ellipse cx="72" cy="86" rx="50" ry="48" fill="var(--aria-skin,#fde8d6)" stroke="${OUT}" stroke-width="1.3"/>
+    <ellipse cx="72" cy="98" rx="50" ry="36" fill="#f4d2bd" opacity="0.30"/>
+    <path d="M22 70 Q16 104 26 124 Q34 104 30 82 Q40 74 46 70 Q30 64 22 70Z" fill="url(#ci_hair)" stroke="${OUT}" stroke-width="1.2"/>
+    <path d="M122 70 Q128 104 118 124 Q110 104 114 82 Q104 74 98 70 Q114 64 122 70Z" fill="url(#ci_hair)" stroke="${OUT}" stroke-width="1.2"/>
+    <path d="M24 78 Q22 36 72 30 Q122 36 120 78 Q113 60 100 66 Q95 46 80 58 Q76 42 64 54 Q56 44 50 60 Q36 50 33 68 Q28 62 24 78 Z" fill="url(#ci_hair)" stroke="${OUT}" stroke-width="1.3"/>
+    <path d="M44 40 Q62 30 84 36" stroke="${HAIRH}" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.85"/>
+    <path d="M30 60 Q34 48 44 44" stroke="${HAIRH}" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+    <ellipse cx="40" cy="104" rx="9" ry="5.5" fill="${BLUSH}" opacity="0.55"/>
+    <ellipse cx="104" cy="104" rx="9" ry="5.5" fill="${BLUSH}" opacity="0.55"/>
+    <circle cx="72" cy="101" r="1.6" fill="#e0ac92"/>
+    ${eyes}${mouth}
   </svg>`;
 }
 function chibiMood() {
