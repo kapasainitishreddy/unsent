@@ -9,13 +9,16 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
 // ---------------- theme ----------------
 const THEME_KEY = 'unsent_theme';
+// Themes cycle in this order when the toggle is tapped.
+const THEME_CYCLE = ['light', 'dark', 'calm'];
 function initTheme() {
   let saved = localStorage.getItem(THEME_KEY);
   if (!saved) saved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   applyTheme(saved);
   const btn = $('#themeToggle');
   if (btn) btn.addEventListener('click', () => {
-    const next = (document.documentElement.dataset.theme === 'dark') ? 'light' : 'dark';
+    const cur = document.documentElement.dataset.theme || 'light';
+    const next = THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length];
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
   });
@@ -83,16 +86,25 @@ function applyTheme(theme) {
   } else {
     html.dataset.theme = theme || 'light';
   }
+  // The toggle previews the theme you'd switch TO next in the cycle.
+  const cur = html.dataset.theme || 'light';
+  const next = THEME_CYCLE[(THEME_CYCLE.indexOf(cur) + 1) % THEME_CYCLE.length] || 'dark';
+  const META = {
+    light: { icon: '☀', label: 'Light' },
+    dark:  { icon: '☾', label: 'Dark' },
+    calm:  { icon: '❀', label: 'Calm' },
+  };
+  const nextMeta = META[next] || META.dark;
   // keep both toggles in sync (sidebar + onboarding overlay)
   const sb = document.getElementById('themeToggle');
   if (sb) {
     const icon = document.getElementById('themeIcon');
     const label = document.getElementById('themeLabel');
-    if (icon) icon.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
-    if (label) label.textContent = html.dataset.theme === 'dark' ? 'Light' : 'Dark';
+    if (icon) icon.textContent = nextMeta.icon;
+    if (label) label.textContent = nextMeta.label;
   }
   const ob = document.getElementById('ob-theme');
-  if (ob) ob.textContent = html.dataset.theme === 'dark' ? '☀' : '☾';
+  if (ob) ob.textContent = nextMeta.icon;
 }
 
 function when(iso) {
