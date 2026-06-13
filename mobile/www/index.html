@@ -817,6 +817,13 @@
     .rm-label { font-size: 9.5px; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .03em; }
     .rm-stage.current .rm-label { color: var(--accent); font-weight: 600; }
 
+    .sb-panel { border-color: var(--accent-soft); }
+    .cl-thread { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; max-height: 260px; overflow-y: auto; }
+    .cl-msg { max-width: 85%; padding: 9px 13px; border-radius: 14px; font-size: 14px; line-height: 1.5; }
+    .cl-user { align-self: flex-end; background: var(--ink); color: var(--bg); border-bottom-right-radius: 4px; }
+    .cl-assistant { align-self: flex-start; background: var(--bg-soft); color: var(--ink); border: 1px solid var(--border-soft); border-bottom-left-radius: 4px; }
+    .cl-typing { opacity: 0.6; font-style: italic; letter-spacing: 2px; }
+
     /* ============== Calm Space ============== */
     .calm-card { margin-bottom: 16px; }
     .calm-h { font-size: 15px; color: var(--ink); margin-bottom: 6px; }

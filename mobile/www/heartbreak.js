@@ -19,6 +19,9 @@ const DELIVER_OPTS = [
 let activeKind = 'reason';
 let wired = false;
 let data = { nc: null, roadmap: null, letters: [], items: [] };
+let sbOpen = false;             // Send-Block cooling-off panel open?
+let closureThread = [];          // Closure space conversation (in-memory)
+let closureBusy = false;
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const root = () => document.getElementById('healing-root');
@@ -155,10 +158,46 @@ function itemsCard() {
   </div>`;
 }
 
+// Send-Block: a cooling-off gate for the urge to message an ex. Friction +
+// a place to put the words instead of sending them.
+function sendBlockCard() {
+  if (!sbOpen) {
+    return `<div class="card heal-card">
+      <h3 class="heal-h">Don't text them 🤚</h3>
+      <p class="heal-hint">Got the urge to reach out? Pause here first. Most urges fade in a few minutes.</p>
+      <button class="btn btn-ghost heal-w" data-act="sb-open">I want to message them</button>
+    </div>`;
+  }
+  return `<div class="card heal-card sb-panel">
+    <h3 class="heal-h">Wait with me a second</h3>
+    <p class="heal-hint">Breathe. Picture how you'll feel tomorrow if you don't send it. Whatever you need to say, say it <em>here</em> — it stays private, it never reaches them.</p>
+    <textarea id="sb-text" class="heal-input" rows="4" placeholder="Everything you want to send them…" maxlength="2000"></textarea>
+    <div class="heal-row">
+      <button class="btn btn-accent" data-act="sb-save">Keep it here, don't send</button>
+      <button class="btn btn-ghost" data-act="sb-wait">I'll wait — close this</button>
+    </div>
+  </div>`;
+}
+
+// Closure space: write what you never got to say; Aria reflects back. This is
+// supportive reflection (not impersonating your ex).
+function closureCard() {
+  const thread = closureThread.map((m) =>
+    `<div class="cl-msg cl-${m.role}">${esc(m.content)}</div>`).join('')
+    || `<p class="heal-empty">Say the thing you never got to say. Aria will sit with you in it.</p>`;
+  return `<div class="card heal-card">
+    <h3 class="heal-h">Closure space</h3>
+    <p class="heal-hint">The conversation you didn't get to finish. Write it out — you'll be heard.</p>
+    <div class="cl-thread" id="cl-thread">${thread}${closureBusy ? '<div class="cl-msg cl-assistant cl-typing">…</div>' : ''}</div>
+    <textarea id="closure-input" class="heal-input" rows="3" placeholder="What I never got to say is…" maxlength="2000"></textarea>
+    <button class="btn btn-accent heal-w" data-act="closure-send" ${closureBusy ? 'disabled' : ''}>${closureBusy ? 'Aria is reading…' : 'Send'}</button>
+  </div>`;
+}
+
 function render() {
   const el = root();
   if (!el) return;
-  el.innerHTML = ncCard() + roadmapCard() + lettersCard() + itemsCard();
+  el.innerHTML = ncCard() + roadmapCard() + sendBlockCard() + closureCard() + lettersCard() + itemsCard();
 }
 
 async function call(path, opts, okMsg) {
@@ -243,6 +282,42 @@ function wire() {
       if (!confirm('Delete this letter?')) return;
       await call(`/api/heartbreak/letters/${id}`, { method: 'DELETE' });
       return loadAll();
+    }
+
+    // ---- Send-Block gate ----
+    if (act === 'sb-open') { sbOpen = true; render(); return; }
+    if (act === 'sb-wait') { sbOpen = false; render(); window.toast && window.toast('The urge will pass. Proud of you. 🤍', 'good'); return; }
+    if (act === 'sb-save') {
+      const body = (document.getElementById('sb-text')?.value || '').trim();
+      if (!body) { window.toast && window.toast('Write it out first — then let it stay here.', 'info'); return; }
+      // Park the words in unsent instead of sending them anywhere.
+      await call('/api/unsent', { method: 'POST', body: { shape: 'missing', body, outcome: 'private' } }, 'Kept here, not sent. The hard part is over. 🤍');
+      sbOpen = false;
+      return loadAll();
+    }
+
+    // ---- Closure space ----
+    if (act === 'closure-send') {
+      if (closureBusy) return;
+      const ta = document.getElementById('closure-input');
+      const text = (ta?.value || '').trim();
+      if (!text) { window.toast && window.toast('Write what you want to say first.', 'info'); return; }
+      closureThread.push({ role: 'user', content: text });
+      closureBusy = true;
+      render();
+      try {
+        const history = closureThread.slice(0, -1).slice(-8).map((m) => ({ role: m.role, content: m.content }));
+        const r = await window.api('/api/ai/companion', { method: 'POST', body: { text, history } });
+        const reply = (r && (r.text || r.message)) || 'I\'m here with you.';
+        closureThread.push({ role: 'assistant', content: reply });
+      } catch (e) {
+        closureThread.push({ role: 'assistant', content: 'I couldn\'t reach you just now — but I\'m still here. Try again in a moment.' });
+      } finally {
+        closureBusy = false;
+        render();
+        const t = document.getElementById('cl-thread'); if (t) t.scrollTop = t.scrollHeight;
+      }
+      return;
     }
   });
 }
