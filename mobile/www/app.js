@@ -132,7 +132,6 @@ $$('.nav-item').forEach(el => {
     if (target === 'gratitude') import('./gratitude.js').then(m => m.init()).catch(err => console.warn(err));
     if (target === 'healing') import('./heartbreak.js').then(m => m.init()).catch(err => console.warn(err));
     if (target === 'calm') import('./calm.js').then(m => m.init()).catch(err => console.warn(err));
-    if (target === 'game') import('./chibigame.js').then(m => m.init()).catch(err => console.warn(err));
   });
 });
 
@@ -205,6 +204,46 @@ async function loadMe() {
   }
 }
 
+// Curated chibi mascots — a softer one for a fresh start, brighter as the
+// streak grows. Picks by streak length, capped at the last one.
+const STREAK_MASCOTS = ['c2', 'c8', 'c1', 'c4', 'c3', 'c5', 'c7', 'c6'];
+function streakMsg(s) {
+  if (s.current === 0) return s.total_active_days
+    ? 'A fresh start — show up for yourself today. 🤍'
+    : 'Your first day starts whenever you\'re ready. 🤍';
+  if (s.current === 1) return 'Day one. You showed up — that\'s the hard part.';
+  if (s.current < 4)  return 'Building something gentle. Keep going. 🌱';
+  if (s.current < 7)  return 'A rhythm is forming. Look at you.';
+  if (s.current < 14) return 'A whole week of showing up for yourself.';
+  if (s.current < 30) return 'Weeks of tending to your own heart. 🌿';
+  return 'This is who you are now: someone who keeps showing up.';
+}
+function renderStreak(s) {
+  const el = $('#streak-banner');
+  if (!el) return;
+  const pic = STREAK_MASCOTS[Math.min(s.current, STREAK_MASCOTS.length - 1)];
+  const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const now = new Date();
+  const dots = (s.week || []).map(w => {
+    const d = new Date(now); d.setDate(now.getDate() - w.offset);
+    const cls = 'streak-dot' + (w.active ? ' on' : '') + (w.offset === 0 ? ' today' : '');
+    return `<div class="streak-day"><span class="${cls}"></span><span class="streak-dlabel">${labels[d.getDay()]}</span></div>`;
+  }).join('');
+  el.innerHTML = `
+    <img class="streak-mascot" src="assets/chibi/${pic}.png" alt="" draggable="false" />
+    <div class="streak-body">
+      <div class="streak-count"><span class="streak-num">${s.current}</span><span class="streak-unit">day${s.current === 1 ? '' : 's'} in a row</span></div>
+      <div class="streak-msg">${streakMsg(s)}</div>
+      <div class="streak-meta">longest ${s.longest} · ${s.total_active_days} day${s.total_active_days === 1 ? '' : 's'} here</div>
+    </div>
+    <div class="streak-dots">${dots}</div>`;
+  el.hidden = false;
+}
+async function loadStreak() {
+  try { renderStreak(await api('/api/streak')); }
+  catch (e) { console.warn('streak load failed', e); }
+}
+
 async function loadCounts() {
   const [v, u, j, m] = await Promise.all([
     api('/api/vents?limit=1'),
@@ -212,6 +251,7 @@ async function loadCounts() {
     api('/api/journal?limit=1'),
     api('/api/mood?limit=1'),
   ]);
+  loadStreak();
   $('#badge-vents').textContent = v.total ?? 0;
   $('#badge-unsent').textContent = u.total ?? 0;
   $('#badge-journal').textContent = j.total ?? 0;
