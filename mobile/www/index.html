@@ -231,7 +231,11 @@
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
     textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
-    textarea.body { min-height: 180px; font-family: 'Fraunces', Georgia, serif; font-size: 17px; }
+    /* The vent body is the room you're alone in — give it space and a page-like
+       calm, not a cramped form field. */
+    textarea.body { min-height: 210px; background: var(--card-2); border-color: var(--line-soft);
+      font-family: 'Fraunces', Georgia, serif; font-size: 18px; line-height: 1.7; padding: 16px 16px; }
+    textarea.body::placeholder { color: var(--ink-faint); font-style: italic; }
 
     /* voice input */
     .voice-wrap { position: relative; }
