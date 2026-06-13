@@ -38,6 +38,7 @@ import statsRoute    from './routes/stats.js';
 import metaRoute     from './routes/meta.js';
 import billingRoute  from './routes/billing.js';
 import gratitudeRoute from './routes/gratitude.js';
+import heartbreakRoute from './routes/heartbreak.js';
 
 const PORT  = parseInt(process.env.PORT  || '4000', 10);
 const HOST  = process.env.HOST  || '127.0.0.1';
@@ -153,7 +154,7 @@ export async function build({ dbPath = DB, logger = false } = {}) {
   for (const plugin of [
     vents, unsent, journal, mood, affirmations, intentions, coping,
     avatar, settingsRoute, exportRoute, wipeRoute, aiRoute, statsRoute, metaRoute,
-    billingRoute, gratitudeRoute,
+    billingRoute, gratitudeRoute, heartbreakRoute,
   ]) {
     await fastify.register(plugin);
   }
